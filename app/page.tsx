@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import FormularioConfirmacao from "@/components/FormularioConfirmacao";
 import Footer from "@/components/Footer";
 import PageViewTracker from "@/components/PageViewTracker";
+import ConteudoText from "@/components/ConteudoText";
 
 function FormLoading() {
     return (
@@ -34,22 +35,29 @@ export default function Home() {
                         <div className="space-y-4">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/30 rounded-full w-fit">
                                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                                <span className="text-primary-dark dark:text-primary text-xs font-bold uppercase tracking-wider">Processo Identificado</span>
+                                <ConteudoText
+                                    chave="homepage.badge"
+                                    fallback="Processo Identificado"
+                                    className="text-primary-dark dark:text-primary text-xs font-bold uppercase tracking-wider"
+                                />
                             </div>
 
                             {/* Headline */}
                             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight text-text-main dark:text-dark-textMain">
-                                Identificamos um direito{" "}
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-darker">
-                                    a seu favor.
-                                </span>
+                                <ConteudoText
+                                    chave="homepage.headline"
+                                    fallback="Identificamos um direito a seu favor."
+                                    as="span"
+                                />
                             </h1>
 
                             {/* Subheadline */}
-                            <p className="text-gray-600 dark:text-dark-textBody text-lg md:text-xl font-normal leading-relaxed max-w-2xl">
-                                Nossa equipe de inteligência jurídica detectou uma oportunidade de restituição em seu nome.
-                                Confirme seus dados para que possamos dar andamento ao processo com total segurança.
-                            </p>
+                            <ConteudoText
+                                chave="homepage.subheadline"
+                                fallback="Nossa equipe de inteligência jurídica detectou uma oportunidade de restituição em seu nome. Confirme seus dados para que possamos dar andamento ao processo com total segurança."
+                                className="text-gray-600 dark:text-dark-textBody text-lg md:text-xl font-normal leading-relaxed max-w-2xl"
+                                as="p"
+                            />
                         </div>
 
                         {/* Cards informativos */}
@@ -60,8 +68,18 @@ export default function Home() {
                                     <span className="material-symbols-outlined">verified_user</span>
                                 </div>
                                 <div>
-                                    <h4 className="text-text-main dark:text-dark-textMain font-bold mb-1">Dados Protegidos</h4>
-                                    <p className="text-sm text-gray-600 dark:text-dark-textSecondary">Seus dados são criptografados e seguem estritamente a LGPD.</p>
+                                    <ConteudoText
+                                        chave="homepage.card1.titulo"
+                                        fallback="Dados Protegidos"
+                                        className="text-text-main dark:text-dark-textMain font-bold mb-1"
+                                        as="h4"
+                                    />
+                                    <ConteudoText
+                                        chave="homepage.card1.texto"
+                                        fallback="Seus dados são criptografados e seguem estritamente a LGPD."
+                                        className="text-sm text-gray-600 dark:text-dark-textSecondary"
+                                        as="p"
+                                    />
                                 </div>
                             </div>
 
@@ -71,8 +89,18 @@ export default function Home() {
                                     <span className="material-symbols-outlined">gavel</span>
                                 </div>
                                 <div>
-                                    <h4 className="text-text-main dark:text-dark-textMain font-bold mb-1">Equipe Especializada</h4>
-                                    <p className="text-sm text-gray-600 dark:text-dark-textSecondary">Advogados com mais de 20 anos de experiência em restituições.</p>
+                                    <ConteudoText
+                                        chave="homepage.card2.titulo"
+                                        fallback="Equipe Especializada"
+                                        className="text-text-main dark:text-dark-textMain font-bold mb-1"
+                                        as="h4"
+                                    />
+                                    <ConteudoText
+                                        chave="homepage.card2.texto"
+                                        fallback="Advogados com mais de 20 anos de experiência em restituições."
+                                        className="text-sm text-gray-600 dark:text-dark-textSecondary"
+                                        as="p"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -87,10 +115,20 @@ export default function Home() {
                                 <div className="w-10 h-10 rounded-full border-2 border-background dark:border-dark-bg bg-primary/20 dark:bg-dark-surface flex items-center justify-center text-xs font-bold text-primary-dark dark:text-white">+12</div>
                             </div>
                             <div>
-                                <p className="text-text-main dark:text-dark-textMain text-sm font-bold">Assessoria Jurídica Ativa</p>
+                                <ConteudoText
+                                    chave="homepage.social.titulo"
+                                    fallback="Assessoria Jurídica Ativa"
+                                    className="text-text-main dark:text-dark-textMain text-sm font-bold"
+                                    as="p"
+                                />
                                 <div className="flex items-center gap-1">
                                     <span className="material-symbols-outlined text-primary text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                    <span className="text-gray-600 dark:text-dark-textSecondary text-xs">4.9/5 de satisfação dos clientes</span>
+                                    <ConteudoText
+                                        chave="homepage.social.avaliacao"
+                                        fallback="4.9/5 de satisfação dos clientes"
+                                        className="text-gray-600 dark:text-dark-textSecondary text-xs"
+                                        as="span"
+                                    />
                                 </div>
                             </div>
                         </div>
