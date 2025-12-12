@@ -16,34 +16,58 @@ const config: Config = {
                     darker: "#8B6F47",  // Dourado mais escuro
                     light: "#E8C88A",   // Dourado claro
                 },
-                // Cores de Fundo - Design Minimalista
+                // Cores de Fundo - DARK THEME (Inspirado na referência)
                 background: {
-                    DEFAULT: "#FAF8F5", // Creme muito claro (fundo principal) - Minimalista
-                    alt: "#FFFFFF",     // Branco puro (fundo inputs)
-                    paper: "#FFFFFF",   // Branco puro (cards)
+                    DEFAULT: "#1A1612", // Fundo escuro marrom
+                    light: "#F5F1E8",   // Fundo claro (alternativo)
+                    alt: "#241E18",     // Fundo alternativo (inputs)
+                    paper: "#2A231C",   // Cards
                 },
-                // Cores de Texto
+                // Cores de Superfície
+                surface: {
+                    dark: "#2A231C",    // Superfície escura
+                    border: "#3D3429",  // Borda de superfície
+                },
+                // Cores de Texto - DARK THEME
                 text: {
-                    main: "#1A1A1A",    // Preto suave (títulos)
-                    body: "#2A2A2A",    // Cinza muito escuro (corpo)
-                    muted: "#6B6B6B",   // Cinza médio suave
-                    gold: "#7A6342",    // Dourado escuro para textos secundários
+                    main: "#FFFFFF",    // Branco (títulos)
+                    body: "#E8DED0",    // Bege claro (corpo)
+                    muted: "#A89A85",   // Bege médio (placeholders)
+                    secondary: "#C4B59A", // Secundário
+                    accent: "#D2AC6E",  // Dourado para destaques
                 },
-                // Auxiliares
-                aux: {
-                    beige: "#E8DCC8",   // Tom bege claro
-                    border: "#E5E5E5",  // Borda suave e minimalista
+                // Cores de Input e Formulário
+                input: {
+                    border: "#D2AC6E",      // Borda dourada para inputs
+                    borderHover: "#B8935A", // Borda dourada hover
+                    borderFocus: "#E8C88A", // Borda dourada focus (mais clara)
                 },
-                // Legacy support
-                "accent-green": "#D2AC6E",
+                // Cores do Botão
+                button: {
+                    bg: "#D2AC6E",          // Fundo do botão (dourado)
+                    bgHover: "#E8C88A",     // Hover do botão (mais claro)
+                    text: "#1A1612",        // Texto do botão (escuro)
+                },
+                // Cores do Box/Card do Formulário
+                formBox: {
+                    border: "#3D3429",      // Borda do box
+                    bg: "#2A231C",          // Fundo do box
+                },
             },
             fontFamily: {
-                sans: ["var(--font-inter)"],
-                serif: ["var(--font-merriweather)"],
+                display: ["Spline Sans", "system-ui", "sans-serif"],
+                sans: ["Spline Sans", "system-ui", "sans-serif"],
+            },
+            borderRadius: {
+                "2xl": "1rem",
+                "3xl": "1.5rem",
+                "4xl": "2rem",
+                "5xl": "3rem",
             },
             backgroundImage: {
                 "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
                 "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+                "gradient-gold": "linear-gradient(to right, #D2AC6E, #8B6F47)",
             },
             animation: {
                 "fade-in": "fadeIn 0.5s ease-out",
@@ -61,9 +85,10 @@ const config: Config = {
                 },
             },
             boxShadow: {
-                "glow": "0 0 20px -5px rgba(210, 172, 110, 0.3)",
-                "card": "0 2px 8px -2px rgba(0, 0, 0, 0.06), 0 1px 3px -1px rgba(0, 0, 0, 0.04)",
-                "input": "0 1px 2px 0 rgba(0, 0, 0, 0.03)",
+                "glow": "0 0 20px rgba(210, 172, 110, 0.3)",
+                "glow-lg": "0 0 30px rgba(210, 172, 110, 0.4)",
+                "card": "0 4px 20px -2px rgba(0, 0, 0, 0.3)",
+                "input": "0 2px 4px 0 rgba(0, 0, 0, 0.2)",
             }
         },
     },

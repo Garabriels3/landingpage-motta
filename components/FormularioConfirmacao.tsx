@@ -1,180 +1,193 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { validarCPF, validarEmail, validarNome, limparCPF } from "@/lib/validations";
 
 declare global {
-    interface Window {
-        hcaptcha: any;
-    }
-}
-
-interface FormData {
-    nome: string;
-    cpf: string;
-    email: string;
-    aceitouTermos: boolean;
-}
-
-interface FormErrors {
-    nome?: string;
-    cpf?: string;
-    email?: string;
-    termos?: string;
-    geral?: string;
+    interface Window { hcaptcha: unknown; onHcaptchaSuccess: (token: string) => void; }
 }
 
 export default function FormularioConfirmacao() {
     const router = useRouter();
-    const [formData, setFormData] = useState<FormData>({ nome: "", cpf: "", email: "", aceitouTermos: false });
-    const [errors, setErrors] = useState<FormErrors>({});
+    const [formData, setFormData] = useState({ nome: "", cpf: "", email: "", aceitouTermos: false });
+    const [errors, setErrors] = useState<{ nome?: string; cpf?: string; email?: string; termos?: string; geral?: string }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [hcaptchaLoaded, setHcaptchaLoaded] = useState(false);
     const [hcaptchaToken, setHcaptchaToken] = useState<string | null>(null);
 
     useEffect(() => {
-        (window as any).onHcaptchaSuccess = (token: string) => {
-            setHcaptchaToken(token);
-            setErrors((prev) => ({ ...prev, geral: undefined }));
-        };
         const script = document.createElement("script");
-        script.src = "https://js.hcaptcha.com/1/api.js";
-        script.async = true; script.defer = true;
-        script.onload = () => setHcaptchaLoaded(true);
-        document.body.appendChild(script);
-        return () => { if (document.body.contains(script)) document.body.removeChild(script); };
+        script.src = "https://hcaptcha.com/1/api.js";
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+        window.onHcaptchaSuccess = (token: string) => setHcaptchaToken(token);
+        return () => { document.head.removeChild(script); };
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
-        if (errors[name as keyof FormErrors]) setErrors((prev) => ({ ...prev, [name]: undefined }));
+        setFormData(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+        if (errors[name as keyof typeof errors]) setErrors(prev => ({ ...prev, [name]: undefined }));
     };
 
     const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let value = e.target.value.replace(/\D/g, "").slice(0, 11);
-        let maskedValue = value;
-        if (value.length > 9) maskedValue = value.replace(/^(\d{3})(\d{3})(\d{3})(\d{2}).*/, "$1.$2.$3-$4");
-        else if (value.length > 6) maskedValue = value.replace(/^(\d{3})(\d{3})(\d{3}).*/, "$1.$2.$3");
-        else if (value.length > 3) maskedValue = value.replace(/^(\d{3})(\d{3}).*/, "$1.$2");
-        setFormData((prev) => ({ ...prev, cpf: maskedValue }));
-        if (errors.cpf) setErrors((prev) => ({ ...prev, cpf: undefined }));
+        let value = e.target.value.replace(/\D/g, "");
+        if (value.length > 11) value = value.slice(0, 11);
+        value = value.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        setFormData(prev => ({ ...prev, cpf: value }));
+        if (errors.cpf) setErrors(prev => ({ ...prev, cpf: undefined }));
+    };
+
+    const validateForm = () => {
+        const newErrors: typeof errors = {};
+        if (!formData.nome.trim() || formData.nome.trim().length < 3) newErrors.nome = "Nome inválido";
+        const cpfNumbers = formData.cpf.replace(/\D/g, "");
+        if (cpfNumbers.length !== 11) newErrors.cpf = "CPF inválido";
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) newErrors.email = "E-mail inválido";
+        if (!formData.aceitouTermos) newErrors.termos = "Aceite os termos";
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newErrors: FormErrors = {};
-        if (!validarNome(formData.nome)) newErrors.nome = "Insira seu nome completo válido.";
-        if (!validarCPF(limparCPF(formData.cpf))) newErrors.cpf = "CPF inválido.";
-        if (!validarEmail(formData.email)) newErrors.email = "E-mail inválido.";
-        if (!formData.aceitouTermos) newErrors.termos = "Aceite os termos.";
-        if (!hcaptchaToken) newErrors.geral = "Verifique que não é um robô.";
-        if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
-
+        if (!validateForm() || !hcaptchaToken) return;
         setIsSubmitting(true);
         try {
             const response = await fetch("/api/register", {
-                method: "POST", headers: { "Content-Type": "application/json" },
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...formData, hcaptchaToken }),
             });
             const data = await response.json();
-            if (!response.ok) throw new Error(data.error);
-            router.push(`/confirmacao?numero=${data.numero_processo || 'nao-encontrado'}`);
-        } catch (error: any) {
-            setErrors({ geral: error.message }); setIsSubmitting(false);
-            if (window.hcaptcha) window.hcaptcha.reset(); setHcaptchaToken(null);
+            if (response.ok) {
+                router.push("/confirmacao");
+            } else {
+                setErrors({ geral: data.error || "Erro ao processar" });
+            }
+        } catch {
+            setErrors({ geral: "Erro de conexão" });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="w-full bg-background-paper rounded-lg shadow-xl border border-primary/20 p-8 animate-slide-up relative">
-            <div className="mb-6">
-                <h2 className="text-2xl font-serif font-bold text-text-main mb-2">
-                    Confirmação de Interesse
-                </h2>
-                <p className="text-sm text-text-body font-medium">
-                    Preencha o formulário abaixo para validar seu direito.
-                </p>
+        <div className="bg-surface-dark border border-surface-border rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden group">
+            {/* Linha gradiente no topo */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+
+            <div className="mb-8">
+                <h3 className="text-2xl font-bold text-text-main mb-2">Confirmação de Interesse</h3>
+                <p className="text-text-secondary text-sm">Preencha o formulário abaixo para validar seu direito.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                 {/* Nome */}
-                <div className="space-y-1">
-                    <label className="text-sm font-bold text-text-main ml-1">Nome Completo</label>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-text-main ml-1">Nome Completo</label>
                     <div className="relative">
-                        <div className="absolute left-3 top-3.5 text-[#B8935A]">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span className="material-symbols-outlined text-text-muted/50">person</span>
                         </div>
-                        <input type="text" name="nome" value={formData.nome} onChange={handleChange}
-                            className={`w-full pl-10 pr-4 py-3 bg-background-alt border rounded-lg 
-                            focus:outline-none focus:ring-0 transition-all font-medium text-text-main placeholder-text-muted
-                            ${errors.nome ? "border-red-400 bg-red-50" : "border-aux-border focus:border-primary"}`}
-                            placeholder="Digite seu nome completo" />
+                        <input
+                            type="text"
+                            name="nome"
+                            value={formData.nome}
+                            onChange={handleChange}
+                            className={`w-full h-14 pl-12 pr-4 bg-background-alt border rounded-xl text-text-main placeholder:text-text-muted/30 focus:ring-1 focus:outline-none transition-all
+                                ${errors.nome ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-surface-border focus:border-primary focus:ring-primary"}`}
+                            placeholder="Digite seu nome completo"
+                        />
                     </div>
                 </div>
 
                 {/* CPF */}
-                <div className="space-y-1">
-                    <label className="text-sm font-bold text-text-main ml-1">CPF</label>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-text-main ml-1">CPF</label>
                     <div className="relative">
-                        <div className="absolute left-3 top-3.5 text-[#B8935A]">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span className="material-symbols-outlined text-text-muted/50">id_card</span>
                         </div>
-                        <input type="text" name="cpf" value={formData.cpf} onChange={handleCpfChange} maxLength={14}
-                            className={`w-full pl-10 pr-4 py-3 bg-background-alt border rounded-lg 
-                            focus:outline-none focus:ring-0 transition-all font-medium text-text-main placeholder-text-muted
-                            ${errors.cpf ? "border-red-400 bg-red-50" : "border-aux-border focus:border-primary"}`}
-                            placeholder="000.000.000-00" />
+                        <input
+                            type="text"
+                            name="cpf"
+                            value={formData.cpf}
+                            onChange={handleCpfChange}
+                            maxLength={14}
+                            className={`w-full h-14 pl-12 pr-4 bg-background-alt border rounded-xl text-text-main placeholder:text-text-muted/30 focus:ring-1 focus:outline-none transition-all
+                                ${errors.cpf ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-surface-border focus:border-primary focus:ring-primary"}`}
+                            placeholder="000.000.000-00"
+                        />
                     </div>
                 </div>
 
                 {/* Email */}
-                <div className="space-y-1">
-                    <label className="text-sm font-bold text-text-main ml-1">E-mail para contato</label>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-text-main ml-1">E-mail para contato</label>
                     <div className="relative">
-                        <div className="absolute left-3 top-3.5 text-[#B8935A]">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span className="material-symbols-outlined text-text-muted/50">mail</span>
                         </div>
-                        <input type="email" name="email" value={formData.email} onChange={handleChange}
-                            className={`w-full pl-10 pr-4 py-3 bg-background-alt border rounded-lg 
-                            focus:outline-none focus:ring-0 transition-all font-medium text-text-main placeholder-text-muted
-                            ${errors.email ? "border-red-400 bg-red-50" : "border-aux-border focus:border-primary"}`}
-                            placeholder="seu@email.com" />
+                        <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            className={`w-full h-14 pl-12 pr-4 bg-background-alt border rounded-xl text-text-main placeholder:text-text-muted/30 focus:ring-1 focus:outline-none transition-all
+                                ${errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-surface-border focus:border-primary focus:ring-primary"}`}
+                            placeholder="seu@email.com"
+                        />
                     </div>
                 </div>
 
-                {/* hCaptcha (Compacto) */}
+                {/* hCaptcha */}
                 <div className="flex justify-start min-h-[78px]">
                     {process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY ? (
-                        <div className="h-captcha" data-sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY} data-callback="onHcaptchaSuccess" data-theme="light"></div>
-                    ) : <p className="text-xs text-red-500 bg-red-50 p-2 rounded w-full text-center">Configurar SITEKEY</p>}
+                        <div className="h-captcha" data-sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY} data-callback="onHcaptchaSuccess" data-theme="dark"></div>
+                    ) : <p className="text-xs text-red-500 bg-red-900/20 p-2 rounded w-full text-center border border-red-500/30">Configurar SITEKEY</p>}
                 </div>
 
-                {/* Termos */}
-                <div className="flex items-start gap-3 pt-2">
-                    <div className="flex items-center h-5">
-                        <input id="termos" name="aceitouTermos" type="checkbox" checked={formData.aceitouTermos} onChange={handleChange}
-                            className="w-5 h-5 text-primary border border-aux-border rounded focus:ring-0 cursor-pointer" />
+                {/* Termos - Checkbox customizado */}
+                <label className="flex items-start gap-3 mt-2 cursor-pointer group/check">
+                    <div className="relative flex items-center">
+                        <input
+                            id="termos"
+                            name="aceitouTermos"
+                            type="checkbox"
+                            checked={formData.aceitouTermos}
+                            onChange={handleChange}
+                            className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-surface-border bg-background-alt checked:border-primary checked:bg-primary transition-all"
+                        />
+                        <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[16px] text-background opacity-0 peer-checked:opacity-100 transition-opacity font-bold">check</span>
                     </div>
-                    <div className="text-xs text-text-body font-medium">
-                        <label htmlFor="termos" className="cursor-pointer">Declaro que li e aceito os <a href="#" className="font-bold underline decoration-[#D2AC6E]">Termos de Uso</a> e a <a href="#" className="font-bold underline decoration-[#D2AC6E]">Política de Privacidade</a>.</label>
-                    </div>
-                </div>
+                    <span className="text-xs text-text-secondary leading-normal pt-0.5">
+                        Declaro que li e aceito os <a href="#" className="text-primary hover:underline font-medium">Termos de Uso</a> e a <a href="#" className="text-primary hover:underline font-medium">Política de Privacidade</a>.
+                    </span>
+                </label>
 
-                <button type="submit" disabled={isSubmitting || !hcaptchaToken}
-                    className={`w-full py-4 px-6 rounded-lg font-bold text-white shadow-md transition-all duration-300 flex items-center justify-center gap-2
-                        ${isSubmitting || !hcaptchaToken ? "bg-gray-400 cursor-not-allowed" : "bg-[#B8935A] hover:bg-[#8B6F47] hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"}`}
+                {/* Botão */}
+                <button
+                    type="submit"
+                    disabled={isSubmitting || !hcaptchaToken}
+                    className={`mt-4 w-full h-14 text-base font-bold rounded-full transition-all transform active:scale-[0.98] flex items-center justify-center gap-2
+                        ${isSubmitting || !hcaptchaToken
+                            ? "bg-gray-600 cursor-not-allowed text-gray-400"
+                            : "bg-primary hover:bg-primary-light text-background shadow-glow hover:shadow-glow-lg"}`}
                 >
                     {isSubmitting ? "Processando..." : (
                         <>
                             Confirmar Interesse
-                            <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                            <span className="material-symbols-outlined text-xl font-bold">arrow_forward</span>
                         </>
                     )}
                 </button>
-                <p className="text-[10px] text-center text-text-muted uppercase tracking-widest font-semibold pt-2">Conexão Segura 256-bit SSL</p>
-                {errors.geral && <div className="text-center text-red-600 text-sm font-bold bg-red-50 p-2 rounded border border-red-200">{errors.geral}</div>}
+
+                <div className="text-center mt-2">
+                    <p className="text-[10px] text-text-secondary/50 uppercase tracking-widest">Conexão Segura 256-bit SSL</p>
+                </div>
+
+                {errors.geral && <div className="text-center text-red-500 text-sm font-bold bg-red-900/20 p-2 rounded border border-red-500/30">{errors.geral}</div>}
             </form>
         </div>
     );
