@@ -7,15 +7,60 @@ interface ConteudoTextProps {
     fallback: string;
     className?: string;
     as?: "span" | "p" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "div" | "label";
+    /** Se true, mostra skeleton enquanto carrega ao invés do fallback */
+    showSkeleton?: boolean;
 }
 
 // Evento global para forçar atualização de todos os conteúdos
-// Pode ser disparado de qualquer lugar: window.dispatchEvent(new Event('conteudo-atualizado'))
 const CONTEUDO_UPDATE_EVENT = 'conteudo-atualizado';
 
 /**
- * Componente para exibir conteúdo do CMS com fallback
- * Busca do Supabase em runtime, mas sempre mostra fallback primeiro
+ * Componente Skeleton com shimmer animado
+ * Adapta o tamanho baseado no tipo de elemento
+ */
+function TextSkeleton({
+    className = "",
+    elementType = "span"
+}: {
+    className?: string;
+    elementType?: string;
+}) {
+    // Definir largura baseada no tipo de elemento
+    const getWidth = () => {
+        switch (elementType) {
+            case 'h1': return 'min-w-[200px] w-3/4';
+            case 'h2': return 'min-w-[180px] w-2/3';
+            case 'h3':
+            case 'h4': return 'min-w-[150px] w-1/2';
+            case 'p': return 'min-w-[120px] w-full';
+            case 'label': return 'min-w-[80px] w-24';
+            default: return 'min-w-[60px] w-20';
+        }
+    };
+
+    // Definir altura baseada no tipo
+    const getHeight = () => {
+        switch (elementType) {
+            case 'h1': return 'h-10 md:h-12';
+            case 'h2': return 'h-8 md:h-10';
+            case 'h3':
+            case 'h4': return 'h-6 md:h-7';
+            case 'p': return 'h-5';
+            default: return 'h-4';
+        }
+    };
+
+    return (
+        <span
+            className={`inline-block bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 rounded animate-shimmer bg-[length:200%_100%] ${getWidth()} ${getHeight()} ${className}`}
+            aria-hidden="true"
+        />
+    );
+}
+
+/**
+ * Componente para exibir conteúdo do CMS com skeleton loading
+ * Mostra shimmer enquanto busca do Supabase, depois exibe o texto real
  * 
  * Para forçar atualização de todos os conteúdos após edição no admin:
  * window.dispatchEvent(new Event('conteudo-atualizado'))
@@ -25,14 +70,20 @@ export default function ConteudoText({
     fallback,
     className = "",
     as: Component = "span",
+    showSkeleton = true,
 }: ConteudoTextProps) {
-    const [texto, setTexto] = useState(fallback);
+    const [texto, setTexto] = useState<string | null>(null);
+    const [carregando, setCarregando] = useState(true);
     const [ultimaAtualizacao, setUltimaAtualizacao] = useState(Date.now());
 
     // Função de busca com cache busting
-    const buscar = useCallback(async () => {
+    const buscar = useCallback(async (isInitialLoad = false) => {
+        // Só mostrar loading no carregamento inicial
+        if (isInitialLoad) {
+            setCarregando(true);
+        }
+
         try {
-            // Cache busting forte: usa timestamp único + random
             const cacheBuster = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
             const response = await fetch(
                 `/api/conteudos?chave=${encodeURIComponent(chave)}&_=${cacheBuster}`,
@@ -49,32 +100,53 @@ export default function ConteudoText({
                 const data = await response.json();
                 if (data.data?.texto) {
                     setTexto(data.data.texto);
+                } else {
+                    // Se não encontrar no banco, usar fallback
+                    setTexto(fallback);
                 }
+            } else {
+                // Em caso de erro HTTP, usar fallback
+                setTexto(fallback);
             }
         } catch (error) {
-            // Em caso de erro, manter fallback
             console.warn(`Erro ao buscar conteúdo "${chave}":`, error);
+            // Em caso de erro, usar fallback
+            setTexto(fallback);
+        } finally {
+            setCarregando(false);
         }
-    }, [chave]);
+    }, [chave, fallback]);
 
-    // Buscar conteúdo inicial e quando houver atualizações
+    // Buscar conteúdo inicial
     useEffect(() => {
-        buscar();
-    }, [buscar, ultimaAtualizacao]);
+        buscar(true);
+    }, [buscar]);
+
+    // Buscar quando houver atualizações (sem mostrar loading)
+    useEffect(() => {
+        // Pular a primeira execução (já foi feita pelo useEffect acima)
+        if (ultimaAtualizacao === 0) return;
+
+        const timer = setTimeout(() => {
+            buscar(false);
+        }, 100);
+
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ultimaAtualizacao]);
 
     // Escutar evento de atualização global
     useEffect(() => {
         const handleConteudoAtualizado = () => {
-            // Forçar nova busca imediatamente
             setUltimaAtualizacao(Date.now());
         };
 
         window.addEventListener(CONTEUDO_UPDATE_EVENT, handleConteudoAtualizado);
 
-        // Também recarregar periodicamente (mas menos frequentemente)
+        // Recarregar periodicamente (60 segundos)
         const interval = setInterval(() => {
             setUltimaAtualizacao(Date.now());
-        }, 60000); // 60 segundos ao invés de 30
+        }, 60000);
 
         return () => {
             window.removeEventListener(CONTEUDO_UPDATE_EVENT, handleConteudoAtualizado);
@@ -82,7 +154,12 @@ export default function ConteudoText({
         };
     }, []);
 
-    return <Component className={className}>{texto}</Component>;
+    // Mostrar skeleton enquanto carrega
+    if (carregando && showSkeleton) {
+        return <Component className={className}><TextSkeleton elementType={Component} /></Component>;
+    }
+
+    return <Component className={className}>{texto || fallback}</Component>;
 }
 
 // Exportar função utilitária para forçar atualização
@@ -91,5 +168,3 @@ export function forcarAtualizacaoConteudos() {
         window.dispatchEvent(new Event(CONTEUDO_UPDATE_EVENT));
     }
 }
-
-

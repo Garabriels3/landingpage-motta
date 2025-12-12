@@ -93,6 +93,7 @@ const config: Config = {
                 "fade-in": "fadeIn 0.5s ease-out",
                 "slide-up": "slideUp 0.5s ease-out",
                 "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                "shimmer": "shimmer 1.5s infinite",
             },
             keyframes: {
                 fadeIn: {
@@ -102,6 +103,10 @@ const config: Config = {
                 slideUp: {
                     "0%": { transform: "translateY(20px)", opacity: "0" },
                     "100%": { transform: "translateY(0)", opacity: "1" },
+                },
+                shimmer: {
+                    "0%": { backgroundPosition: "200% 0" },
+                    "100%": { backgroundPosition: "-200% 0" },
                 },
             },
             boxShadow: {
