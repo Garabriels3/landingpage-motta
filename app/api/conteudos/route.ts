@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Forçar renderização dinâmica
+// Forçar renderização dinâmica (sem cache)
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 /**
  * GET /api/conteudos
  * Buscar conteúdos do site (público, mas usa service_role internamente)
+ * IMPORTANTE: Não fazer cache para garantir dados atualizados do CMS
  */
 export async function GET(request: NextRequest) {
     try {
@@ -20,7 +22,10 @@ export async function GET(request: NextRequest) {
         if (!supabaseUrl || !supabaseServiceKey) {
             return NextResponse.json(
                 { error: "Supabase não configurado" },
-                { status: 503 }
+                {
+                    status: 503,
+                    headers: { "Cache-Control": "no-store, no-cache, must-revalidate" }
+                }
             );
         }
 
@@ -65,7 +70,17 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        return NextResponse.json({ data });
+        // Retornar com headers anti-cache para garantir dados frescos
+        return NextResponse.json(
+            { data },
+            {
+                headers: {
+                    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0",
+                },
+            }
+        );
     } catch (error) {
         console.error("Erro inesperado:", error);
         return NextResponse.json(

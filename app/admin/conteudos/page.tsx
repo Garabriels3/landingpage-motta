@@ -131,7 +131,9 @@ export default function AdminConteudosPage() {
 
             if (response.ok) {
                 setEditando(null);
-                carregarConteudos(token);
+                await carregarConteudos(token);
+                // Mostrar confirmação de sucesso
+                alert("✅ Conteúdo salvo com sucesso!\n\nO site será atualizado automaticamente em até 60 segundos.\n\nPara ver as mudanças imediatamente, recarregue a página do site (Ctrl+F5).");
             } else {
                 const data = await response.json();
                 alert(`Erro: ${data.error}`);
