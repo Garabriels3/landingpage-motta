@@ -1,22 +1,249 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 // Forçar renderização dinâmica
 export const dynamic = "force-dynamic";
 
+// Configurações de Rate Limiting
+const RATE_LIMIT_MAX_ATTEMPTS = 5; // Máximo de tentativas
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutos
+
 /**
- * Verificar autenticação admin
+ * Obter IP do request
  */
-function verificarAuth(request: NextRequest): boolean {
+function getClientIP(request: NextRequest): string {
+    const forwarded = request.headers.get("x-forwarded-for");
+    const realIP = request.headers.get("x-real-ip");
+    return forwarded?.split(",")[0]?.trim() || realIP || "unknown";
+}
+
+/**
+ * Obter User-Agent do request
+ */
+function getUserAgent(request: NextRequest): string {
+    return request.headers.get("user-agent") || "unknown";
+}
+
+/**
+ * Obter cliente Supabase
+ */
+function getSupabaseClient(): SupabaseClient | null {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+        return null;
+    }
+
+    return createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+        },
+    });
+}
+
+/**
+ * Verificar rate limit usando tabela existente
+ */
+async function verificarRateLimitAdmin(
+    supabase: SupabaseClient,
+    ip: string
+): Promise<{ permitido: boolean; tentativasRestantes: number }> {
+    try {
+        const key = `admin_login:${ip}`;
+        const now = new Date();
+        const resetTime = new Date(now.getTime() + RATE_LIMIT_WINDOW_MS);
+
+        // Buscar registro existente
+        const { data: existing, error: fetchError } = await supabase
+            .from("rate_limits")
+            .select("*")
+            .eq("key", key)
+            .single();
+
+        // Se não existe, criar novo
+        if (fetchError && fetchError.code === "PGRST116") {
+            await supabase.from("rate_limits").insert([{
+                key,
+                count: 1,
+                reset_time: resetTime.toISOString(),
+            }]);
+            return { permitido: true, tentativasRestantes: RATE_LIMIT_MAX_ATTEMPTS - 1 };
+        }
+
+        // Se existe mas expirou, resetar
+        if (existing && new Date(existing.reset_time) < now) {
+            await supabase
+                .from("rate_limits")
+                .update({
+                    count: 1,
+                    reset_time: resetTime.toISOString(),
+                    updated_at: now.toISOString(),
+                })
+                .eq("key", key);
+            return { permitido: true, tentativasRestantes: RATE_LIMIT_MAX_ATTEMPTS - 1 };
+        }
+
+        // Se existe e não expirou, verificar limite
+        if (existing) {
+            if (existing.count >= RATE_LIMIT_MAX_ATTEMPTS) {
+                return { permitido: false, tentativasRestantes: 0 };
+            }
+
+            // Incrementar contador
+            await supabase
+                .from("rate_limits")
+                .update({
+                    count: existing.count + 1,
+                    updated_at: now.toISOString(),
+                })
+                .eq("key", key);
+
+            return {
+                permitido: true,
+                tentativasRestantes: RATE_LIMIT_MAX_ATTEMPTS - existing.count - 1
+            };
+        }
+
+        return { permitido: true, tentativasRestantes: RATE_LIMIT_MAX_ATTEMPTS };
+    } catch (error) {
+        console.error("Erro ao verificar rate limit:", error);
+        // Fail-open: permitir se houver erro
+        return { permitido: true, tentativasRestantes: RATE_LIMIT_MAX_ATTEMPTS };
+    }
+}
+
+/**
+ * Resetar rate limit após login bem-sucedido
+ */
+async function resetarRateLimitAdmin(supabase: SupabaseClient, ip: string): Promise<void> {
+    try {
+        const key = `admin_login:${ip}`;
+        await supabase.from("rate_limits").delete().eq("key", key);
+    } catch (error) {
+        console.error("Erro ao resetar rate limit:", error);
+    }
+}
+
+/**
+ * Registrar log de auditoria
+ */
+async function registrarAuditLog(
+    supabase: SupabaseClient,
+    acao: "CREATE" | "UPDATE" | "DELETE" | "LOGIN_FAILED" | "LOGIN_SUCCESS" | "LOGIN_BLOCKED",
+    ip: string,
+    userAgent: string,
+    chaveConteudo?: string,
+    valorAnterior?: string,
+    valorNovo?: string,
+    detalhes?: Record<string, any>
+): Promise<void> {
+    try {
+        await supabase.from("admin_audit_logs").insert([{
+            acao,
+            chave_conteudo: chaveConteudo || null,
+            valor_anterior: valorAnterior || null,
+            valor_novo: valorNovo || null,
+            ip,
+            user_agent: userAgent,
+            detalhes: detalhes || null,
+        }]);
+    } catch (error) {
+        // Log de auditoria não deve bloquear a operação principal
+        console.error("Erro ao registrar log de auditoria:", error);
+    }
+}
+
+/**
+ * Verificar autenticação admin com rate limiting
+ */
+async function verificarAuthComRateLimit(
+    request: NextRequest,
+    supabase: SupabaseClient
+): Promise<{
+    autorizado: boolean;
+    erro?: string;
+    status?: number;
+    ip: string;
+    userAgent: string;
+}> {
+    const ip = getClientIP(request);
+    const userAgent = getUserAgent(request);
     const authHeader = request.headers.get("authorization");
     const adminSecret = process.env.ADMIN_SECRET_KEY;
 
+    // Verificar se admin secret está configurado
     if (!adminSecret) {
-        return false;
+        return {
+            autorizado: false,
+            erro: "Configuração de admin ausente",
+            status: 503,
+            ip,
+            userAgent
+        };
     }
 
+    // Verificar rate limit antes de validar senha
+    const { permitido, tentativasRestantes } = await verificarRateLimitAdmin(supabase, ip);
+
+    if (!permitido) {
+        // Registrar tentativa bloqueada
+        await registrarAuditLog(
+            supabase,
+            "LOGIN_BLOCKED",
+            ip,
+            userAgent,
+            undefined,
+            undefined,
+            undefined,
+            { motivo: "Rate limit excedido" }
+        );
+
+        return {
+            autorizado: false,
+            erro: `Muitas tentativas. Aguarde 15 minutos. (IP: ${ip.substring(0, 8)}...)`,
+            status: 429,
+            ip,
+            userAgent
+        };
+    }
+
+    // Verificar credenciais
     const expectedAuth = `Bearer ${adminSecret}`;
-    return authHeader === expectedAuth;
+    const credenciaisCorretas = authHeader === expectedAuth;
+
+    if (!credenciaisCorretas) {
+        // Registrar tentativa falha
+        await registrarAuditLog(
+            supabase,
+            "LOGIN_FAILED",
+            ip,
+            userAgent,
+            undefined,
+            undefined,
+            undefined,
+            { tentativasRestantes }
+        );
+
+        return {
+            autorizado: false,
+            erro: tentativasRestantes > 0
+                ? `Senha incorreta. Tentativas restantes: ${tentativasRestantes}`
+                : "Senha incorreta. Última tentativa!",
+            status: 401,
+            ip,
+            userAgent
+        };
+    }
+
+    // Login bem-sucedido - resetar rate limit
+    await resetarRateLimitAdmin(supabase, ip);
+
+    // Registrar login bem-sucedido (apenas uma vez por sessão seria ideal, mas simplificando)
+    // Comentado para não poluir logs: await registrarAuditLog(supabase, "LOGIN_SUCCESS", ip, userAgent);
+
+    return { autorizado: true, ip, userAgent };
 }
 
 /**
@@ -24,33 +251,27 @@ function verificarAuth(request: NextRequest): boolean {
  * Listar todos os conteúdos (admin only)
  */
 export async function GET(request: NextRequest) {
-    if (!verificarAuth(request)) {
+    const supabase = getSupabaseClient();
+
+    if (!supabase) {
         return NextResponse.json(
-            { error: "Não autorizado" },
-            { status: 401 }
+            { error: "Supabase não configurado" },
+            { status: 503 }
+        );
+    }
+
+    const auth = await verificarAuthComRateLimit(request, supabase);
+
+    if (!auth.autorizado) {
+        return NextResponse.json(
+            { error: auth.erro },
+            { status: auth.status || 401 }
         );
     }
 
     try {
         const { searchParams } = new URL(request.url);
         const pagina = searchParams.get("pagina");
-
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-
-        if (!supabaseUrl || !supabaseServiceKey) {
-            return NextResponse.json(
-                { error: "Supabase não configurado" },
-                { status: 503 }
-            );
-        }
-
-        const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false,
-            },
-        });
 
         let query = supabase.from("conteudos").select("*").order("pagina", { ascending: true }).order("chave", { ascending: true });
 
@@ -83,10 +304,21 @@ export async function GET(request: NextRequest) {
  * Criar novo conteúdo (admin only)
  */
 export async function POST(request: NextRequest) {
-    if (!verificarAuth(request)) {
+    const supabase = getSupabaseClient();
+
+    if (!supabase) {
         return NextResponse.json(
-            { error: "Não autorizado" },
-            { status: 401 }
+            { error: "Supabase não configurado" },
+            { status: 503 }
+        );
+    }
+
+    const auth = await verificarAuthComRateLimit(request, supabase);
+
+    if (!auth.autorizado) {
+        return NextResponse.json(
+            { error: auth.erro },
+            { status: auth.status || 401 }
         );
     }
 
@@ -118,23 +350,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-
-        if (!supabaseUrl || !supabaseServiceKey) {
-            return NextResponse.json(
-                { error: "Supabase não configurado" },
-                { status: 503 }
-            );
-        }
-
-        const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false,
-            },
-        });
-
         const { data, error } = await supabase
             .from("conteudos")
             .insert([{
@@ -161,6 +376,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Registrar criação no log de auditoria
+        await registrarAuditLog(
+            supabase,
+            "CREATE",
+            auth.ip,
+            auth.userAgent,
+            chave,
+            undefined,
+            texto.trim().substring(0, 500) // Limitar tamanho no log
+        );
+
         return NextResponse.json({ data }, { status: 201 });
     } catch (error) {
         console.error("Erro inesperado:", error);
@@ -176,10 +402,21 @@ export async function POST(request: NextRequest) {
  * Atualizar conteúdo existente (admin only)
  */
 export async function PUT(request: NextRequest) {
-    if (!verificarAuth(request)) {
+    const supabase = getSupabaseClient();
+
+    if (!supabase) {
         return NextResponse.json(
-            { error: "Não autorizado" },
-            { status: 401 }
+            { error: "Supabase não configurado" },
+            { status: 503 }
+        );
+    }
+
+    const auth = await verificarAuthComRateLimit(request, supabase);
+
+    if (!auth.autorizado) {
+        return NextResponse.json(
+            { error: auth.erro },
+            { status: auth.status || 401 }
         );
     }
 
@@ -202,22 +439,12 @@ export async function PUT(request: NextRequest) {
             );
         }
 
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-
-        if (!supabaseUrl || !supabaseServiceKey) {
-            return NextResponse.json(
-                { error: "Supabase não configurado" },
-                { status: 503 }
-            );
-        }
-
-        const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false,
-            },
-        });
+        // Buscar valor anterior para o log
+        const { data: anterior } = await supabase
+            .from("conteudos")
+            .select("texto")
+            .eq("chave", chave)
+            .single();
 
         const updateData: any = {};
         if (texto !== undefined) updateData.texto = texto.trim();
@@ -246,6 +473,17 @@ export async function PUT(request: NextRequest) {
             );
         }
 
+        // Registrar atualização no log de auditoria
+        await registrarAuditLog(
+            supabase,
+            "UPDATE",
+            auth.ip,
+            auth.userAgent,
+            chave,
+            anterior?.texto?.substring(0, 500),
+            texto?.trim()?.substring(0, 500)
+        );
+
         return NextResponse.json({ data });
     } catch (error) {
         console.error("Erro inesperado:", error);
@@ -261,10 +499,21 @@ export async function PUT(request: NextRequest) {
  * Deletar conteúdo (admin only)
  */
 export async function DELETE(request: NextRequest) {
-    if (!verificarAuth(request)) {
+    const supabase = getSupabaseClient();
+
+    if (!supabase) {
         return NextResponse.json(
-            { error: "Não autorizado" },
-            { status: 401 }
+            { error: "Supabase não configurado" },
+            { status: 503 }
+        );
+    }
+
+    const auth = await verificarAuthComRateLimit(request, supabase);
+
+    if (!auth.autorizado) {
+        return NextResponse.json(
+            { error: auth.erro },
+            { status: auth.status || 401 }
         );
     }
 
@@ -279,22 +528,12 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-
-        if (!supabaseUrl || !supabaseServiceKey) {
-            return NextResponse.json(
-                { error: "Supabase não configurado" },
-                { status: 503 }
-            );
-        }
-
-        const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false,
-            },
-        });
+        // Buscar valor anterior para o log
+        const { data: anterior } = await supabase
+            .from("conteudos")
+            .select("texto")
+            .eq("chave", chave)
+            .single();
 
         const { error } = await supabase
             .from("conteudos")
@@ -309,6 +548,17 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
+        // Registrar deleção no log de auditoria
+        await registrarAuditLog(
+            supabase,
+            "DELETE",
+            auth.ip,
+            auth.userAgent,
+            chave,
+            anterior?.texto?.substring(0, 500),
+            undefined
+        );
+
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Erro inesperado:", error);
@@ -318,4 +568,3 @@ export async function DELETE(request: NextRequest) {
         );
     }
 }
-

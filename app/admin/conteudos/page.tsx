@@ -78,10 +78,12 @@ export default function AdminConteudosPage() {
                 setAutenticado(true);
                 carregarConteudos(senha);
             } else {
-                setErro("Senha incorreta");
+                // Exibir mensagem de erro detalhada do servidor
+                const data = await response.json();
+                setErro(data.error || "Senha incorreta");
             }
         } catch (error) {
-            setErro("Erro ao autenticar");
+            setErro("Erro ao conectar com o servidor");
         }
     };
 
