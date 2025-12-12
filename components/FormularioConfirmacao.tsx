@@ -14,7 +14,7 @@ export default function FormularioConfirmacao() {
     const [errors, setErrors] = useState<{ nome?: string; cpf?: string; email?: string; termos?: string; geral?: string }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hcaptchaToken, setHcaptchaToken] = useState<string | null>(null);
-    
+
     // Capturar parâmetro de campanha da URL (ex: ?campaign=novembro-2025)
     const campaign = searchParams.get("campaign") || null;
 
@@ -39,7 +39,7 @@ export default function FormularioConfirmacao() {
         if (value.length > 11) value = value.slice(0, 11);
         value = value.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
         setFormData(prev => ({ ...prev, cpf: value }));
-        
+
         // Validar CPF em tempo real quando tiver 11 dígitos
         const cpfLimpo = limparCPF(value);
         if (cpfLimpo.length === 11) {
@@ -56,31 +56,45 @@ export default function FormularioConfirmacao() {
 
     const validateForm = () => {
         const newErrors: typeof errors = {};
-        if (!formData.nome.trim() || formData.nome.trim().length < 3) newErrors.nome = "Nome inválido";
-        
+        if (!formData.nome.trim() || formData.nome.trim().length < 3) newErrors.nome = "Nome inválido (mínimo 3 caracteres)";
+
         // Validação completa de CPF com algoritmo verificador
         const cpfLimpo = limparCPF(formData.cpf);
         if (!validarCPF(cpfLimpo)) {
             newErrors.cpf = "CPF inválido. Verifique os números digitados.";
         }
-        
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email)) newErrors.email = "E-mail inválido";
-        if (!formData.aceitouTermos) newErrors.termos = "Aceite os termos";
+        if (!formData.aceitouTermos) newErrors.termos = "Você precisa aceitar os termos";
+        if (!hcaptchaToken) newErrors.geral = "Complete a verificação de segurança (captcha)";
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
+    // Verifica se todos os campos estão preenchidos corretamente para habilitar o botão
+    const isFormValid = () => {
+        const nomeValido = formData.nome.trim().length >= 3;
+        const cpfLimpo = limparCPF(formData.cpf);
+        const cpfValido = validarCPF(cpfLimpo);
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailValido = emailRegex.test(formData.email);
+        const termosAceitos = formData.aceitouTermos;
+        const captchaFeito = !!hcaptchaToken;
+
+        return nomeValido && cpfValido && emailValido && termosAceitos && captchaFeito;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!validateForm() || !hcaptchaToken) return;
+        if (!validateForm()) return;
         setIsSubmitting(true);
         try {
             const response = await fetch("/api/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    ...formData, 
+                body: JSON.stringify({
+                    ...formData,
                     hcaptchaToken,
                     campaign: campaign || process.env.NEXT_PUBLIC_CAMPAIGN_NAME || "direct"
                 }),
@@ -128,6 +142,9 @@ export default function FormularioConfirmacao() {
                             placeholder="Digite seu nome completo"
                         />
                     </div>
+                    {errors.nome && (
+                        <p className="text-xs text-red-500 ml-1 mt-1">{errors.nome}</p>
+                    )}
                 </div>
 
                 {/* CPF */}
@@ -170,6 +187,9 @@ export default function FormularioConfirmacao() {
                             placeholder="seu@email.com"
                         />
                     </div>
+                    {errors.email && (
+                        <p className="text-xs text-red-500 ml-1 mt-1">{errors.email}</p>
+                    )}
                 </div>
 
                 {/* hCaptcha */}
@@ -196,13 +216,15 @@ export default function FormularioConfirmacao() {
                         Declaro que li e aceito os <a href="#" className="text-primary hover:underline font-medium">Termos de Uso</a> e a <a href="#" className="text-primary hover:underline font-medium">Política de Privacidade</a>.
                     </span>
                 </label>
+                {errors.termos && (
+                    <p className="text-xs text-red-500 ml-1">{errors.termos}</p>
+                )}
 
-                {/* Botão */}
                 <button
                     type="submit"
-                    disabled={isSubmitting || !hcaptchaToken}
+                    disabled={isSubmitting || !isFormValid()}
                     className={`mt-4 w-full h-14 text-base font-bold rounded-full transition-all transform active:scale-[0.98] flex items-center justify-center gap-2
-                        ${isSubmitting || !hcaptchaToken
+                        ${isSubmitting || !isFormValid()
                             ? "bg-gray-600 cursor-not-allowed text-gray-400"
                             : "bg-primary hover:bg-primary-light text-background shadow-glow hover:shadow-glow-lg"}`}
                 >
