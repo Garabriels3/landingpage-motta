@@ -20,7 +20,7 @@ function ConfirmacaoContent() {
             return;
         }
         setNumeroProcesso(numero);
-        
+
         // Track page view
         tracking.pageView("/confirmacao", {
             processo_encontrado: numero !== "nao-encontrado",
@@ -32,7 +32,7 @@ function ConfirmacaoContent() {
             navigator.clipboard.writeText(numeroProcesso);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
-            
+
             // Track copy action
             tracking.copyProcessoNumber(numeroProcesso);
         }
@@ -51,7 +51,7 @@ function ConfirmacaoContent() {
             : `https://web.whatsapp.com/send?phone=${telefone}&text=${mensagemEncoded}`;
 
         window.open(url, "_blank");
-        
+
         // Track WhatsApp click
         tracking.whatsappClicked(undefined, {
             processo_encontrado: numeroProcesso !== "nao-encontrado",
@@ -121,8 +121,17 @@ function ConfirmacaoContent() {
                             </div>
 
                             <div className="bg-background dark:bg-dark-bgAlt border-2 border-primary/30 dark:border-dark-border rounded-xl p-8 shadow-inner">
-                                <p className="text-2xl md:text-3xl font-mono font-bold text-primary text-center tracking-wide select-all">
+                                <a
+                                    href="https://www3.tjrj.jus.br/consultaprocessual/#/consultapublica"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-2xl md:text-3xl font-mono font-bold text-primary text-center tracking-wide select-all block hover:text-primary-light transition-colors cursor-pointer hover:underline"
+                                    title="Clique para consultar no TJRJ"
+                                >
                                     {numeroProcesso}
+                                </a>
+                                <p className="text-xs text-gray-500 dark:text-dark-textMuted text-center mt-2">
+                                    Clique no número para consultar no TJRJ
                                 </p>
                             </div>
 
@@ -189,27 +198,27 @@ function ConfirmacaoContent() {
 
                             <div className="space-y-4">
                                 {[
-                                    { 
-                                        num: 1, 
+                                    {
+                                        num: 1,
                                         chaveTitulo: "confirmacao.consulta.passo1.titulo",
                                         chaveTexto: "confirmacao.consulta.passo1.texto",
-                                        title: "Copie o número", 
-                                        desc: "Utilize o botão \"Copiar\" no cartão acima." 
+                                        title: "Copie o número",
+                                        desc: "Utilize o botão \"Copiar\" no cartão acima."
                                     },
-                                    { 
-                                        num: 2, 
+                                    {
+                                        num: 2,
                                         chaveTitulo: "confirmacao.consulta.passo2.titulo",
                                         chaveTexto: "confirmacao.consulta.passo2.texto",
-                                        title: "Acesse o portal de consultas", 
-                                        desc: "Recomendamos o site JusBrasil.", 
-                                        link: "https://www.jusbrasil.com.br" 
+                                        title: "Acesse o portal de consultas",
+                                        desc: "Acesse o portal do Tribunal de Justiça do RJ.",
+                                        link: "https://www3.tjrj.jus.br/consultaprocessual/#/consultapublica"
                                     },
-                                    { 
-                                        num: 3, 
+                                    {
+                                        num: 3,
                                         chaveTitulo: "confirmacao.consulta.passo3.titulo",
                                         chaveTexto: "confirmacao.consulta.passo3.texto",
-                                        title: "Cole na barra de busca", 
-                                        desc: "No campo de pesquisa, cole o número para visualizar as movimentações." 
+                                        title: "Cole na barra de busca",
+                                        desc: "No campo de pesquisa, cole o número para visualizar as movimentações."
                                     },
                                 ].map((step) => (
                                     <div key={step.num} className="flex items-start gap-4 p-4 bg-white dark:bg-dark-surface/50 rounded-2xl border-2 border-primary/20 dark:border-dark-border">
@@ -236,7 +245,7 @@ function ConfirmacaoContent() {
                                                     rel="noopener noreferrer"
                                                     className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-primary-light hover:underline mt-1"
                                                 >
-                                                    Acessar jusbrasil.com.br
+                                                    Acessar tjrj.jus.br
                                                     <span className="material-symbols-outlined text-sm">open_in_new</span>
                                                 </a>
                                             )}
