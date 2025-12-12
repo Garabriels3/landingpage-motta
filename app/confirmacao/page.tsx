@@ -45,7 +45,7 @@ function ConfirmacaoContent() {
 
     if (!numeroProcesso) {
         return (
-            <main className="min-h-screen flex items-center justify-center bg-background">
+            <main className="min-h-screen flex items-center justify-center bg-background dark:bg-dark-bg">
                 <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full"></div>
             </main>
         );
@@ -54,7 +54,7 @@ function ConfirmacaoContent() {
     const encontrado = numeroProcesso !== "nao-encontrado";
 
     return (
-        <main className="min-h-screen flex flex-col bg-background selection:bg-primary/30 selection:text-primary-darker">
+        <main className="min-h-screen flex flex-col bg-background dark:bg-dark-bg selection:bg-primary/30 selection:text-primary-darker">
             {/* Background Effects */}
             <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
                 <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary/10 dark:bg-primary/5 rounded-full blur-[120px]"></div>
@@ -86,7 +86,7 @@ function ConfirmacaoContent() {
 
                     {/* Card com número do processo */}
                     {encontrado ? (
-                        <div className="bg-surface-dark p-8 rounded-3xl border border-surface-border shadow-2xl space-y-6 animate-slide-up relative overflow-hidden">
+                        <div className="bg-white dark:bg-dark-paper p-8 rounded-3xl border-2 border-primary dark:border-dark-border shadow-2xl space-y-6 animate-slide-up relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
 
                             <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider justify-center">
@@ -94,7 +94,7 @@ function ConfirmacaoContent() {
                                 <span>Número do Processo Unificado</span>
                             </div>
 
-                            <div className="bg-background-alt border border-primary/30 rounded-xl p-8 shadow-inner">
+                            <div className="bg-background dark:bg-dark-bgAlt border-2 border-primary/30 dark:border-dark-border rounded-xl p-8 shadow-inner">
                                 <p className="text-2xl md:text-3xl font-mono font-bold text-primary text-center tracking-wide select-all">
                                     {numeroProcesso}
                                 </p>
@@ -117,17 +117,17 @@ function ConfirmacaoContent() {
                                 )}
                             </button>
 
-                            <div className="flex items-center justify-center gap-2 text-xs text-text-muted pt-2 border-t border-dashed border-surface-border">
+                            <div className="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-dark-textMuted pt-2 border-t border-dashed border-primary/20 dark:border-dark-border">
                                 <span className="material-symbols-outlined text-sm">lock</span>
                                 <p>Dados protegidos por sigilo profissional e LGPD.</p>
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-surface-dark p-8 rounded-3xl border border-surface-border shadow-lg text-center space-y-4">
-                            <p className="text-text-body">
+                        <div className="bg-white dark:bg-dark-paper p-8 rounded-3xl border-2 border-primary dark:border-dark-border shadow-lg text-center space-y-4">
+                            <p className="text-gray-700 dark:text-dark-textBody">
                                 Não localizamos um processo ativo neste momento, mas isso não significa que você não tenha direitos a receber.
                             </p>
-                            <p className="text-sm text-text-muted">
+                            <p className="text-sm text-gray-500 dark:text-dark-textMuted">
                                 Nossa equipe pode realizar uma análise mais detalhada e identificar outras oportunidades de restituição.
                             </p>
                         </div>
@@ -136,7 +136,7 @@ function ConfirmacaoContent() {
                     {/* Instruções de consulta */}
                     {encontrado && (
                         <div className="space-y-4">
-                            <h2 className="font-bold text-text-main text-lg border-b border-primary/20 pb-2">
+                            <h2 className="font-bold text-text-main dark:text-dark-textMain text-lg border-b border-primary/30 dark:border-dark-border pb-2">
                                 Como consultar seu processo:
                             </h2>
 
@@ -146,13 +146,13 @@ function ConfirmacaoContent() {
                                     { num: 2, title: "Acesse o portal de consultas", desc: "Recomendamos o site JusBrasil.", link: "https://www.jusbrasil.com.br" },
                                     { num: 3, title: "Cole na barra de busca", desc: "No campo de pesquisa, cole o número para visualizar as movimentações." },
                                 ].map((step) => (
-                                    <div key={step.num} className="flex items-start gap-4 p-4 bg-surface-dark/50 rounded-2xl border border-surface-border">
-                                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-background font-bold shadow-sm">
+                                    <div key={step.num} className="flex items-start gap-4 p-4 bg-white dark:bg-dark-surface/50 rounded-2xl border-2 border-primary/20 dark:border-dark-border">
+                                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white font-bold shadow-sm">
                                             {step.num}
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-text-main mb-1">{step.title}</h3>
-                                            <p className="text-sm text-text-secondary">{step.desc}</p>
+                                            <h3 className="font-bold text-text-main dark:text-dark-textMain mb-1">{step.title}</h3>
+                                            <p className="text-sm text-gray-600 dark:text-dark-textSecondary">{step.desc}</p>
                                             {step.link && (
                                                 <a
                                                     href={step.link}
@@ -172,11 +172,11 @@ function ConfirmacaoContent() {
                     )}
 
                     {/* CTA WhatsApp */}
-                    <div className="bg-surface-dark p-6 rounded-3xl border border-primary/30 shadow-glow space-y-4">
-                        <h3 className="font-bold text-text-main text-center text-lg">
+                    <div className="bg-white dark:bg-dark-paper p-6 rounded-3xl border-2 border-primary dark:border-dark-border shadow-glow space-y-4">
+                        <h3 className="font-bold text-text-main dark:text-dark-textMain text-center text-lg">
                             Precisa de orientação especializada?
                         </h3>
-                        <p className="text-sm text-text-secondary text-center max-w-lg mx-auto">
+                        <p className="text-sm text-gray-600 dark:text-dark-textSecondary text-center max-w-lg mx-auto">
                             Nossa equipe já analisou seu caso e pode explicar os próximos passos.
                         </p>
 
