@@ -14,18 +14,32 @@ export default function FormularioConfirmacao() {
     const [errors, setErrors] = useState<{ nome?: string; cpf?: string; email?: string; termos?: string; geral?: string }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hcaptchaToken, setHcaptchaToken] = useState<string | null>(null);
+    const [isDarkMode, setIsDarkMode] = useState(true);
 
     // Capturar parâmetro de campanha da URL (ex: ?campaign=novembro-2025)
     const campaign = searchParams.get("campaign") || null;
 
     useEffect(() => {
+        // Detectar tema atual
+        const checkTheme = () => {
+            setIsDarkMode(document.documentElement.classList.contains("dark"));
+        };
+        checkTheme();
+
+        // Observer para mudanças no tema
+        const observer = new MutationObserver(checkTheme);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
         const script = document.createElement("script");
         script.src = "https://hcaptcha.com/1/api.js";
         script.async = true;
         script.defer = true;
         document.head.appendChild(script);
         window.onHcaptchaSuccess = (token: string) => setHcaptchaToken(token);
-        return () => { document.head.removeChild(script); };
+        return () => {
+            document.head.removeChild(script);
+            observer.disconnect();
+        };
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,14 +128,24 @@ export default function FormularioConfirmacao() {
         }
     };
 
+    // Estilos de input - bordas douradas mais fortes no light mode
+    const inputBaseClass = `w-full h-14 pl-12 pr-4 rounded-xl focus:ring-2 focus:outline-none transition-all
+        bg-white dark:bg-dark-bgAlt 
+        text-text-main dark:text-dark-textMain 
+        placeholder:text-gray-500 dark:placeholder:text-dark-textMuted/50`;
+
+    const inputBorderClass = (hasError: boolean) => hasError
+        ? "border-2 border-red-500 focus:border-red-500 focus:ring-red-500/20"
+        : "border-2 border-primary dark:border-dark-border focus:border-primary-dark dark:focus:border-primary focus:ring-primary/20";
+
     return (
-        <div className="bg-white dark:bg-dark-paper border-2 border-primary/30 dark:border-dark-border rounded-3xl p-6 md:p-8 shadow-card dark:shadow-card-dark relative overflow-hidden group">
+        <div className="bg-white dark:bg-dark-paper border-2 border-primary dark:border-dark-border rounded-3xl p-6 md:p-8 shadow-card dark:shadow-card-dark relative overflow-hidden group">
             {/* Linha gradiente no topo */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-60"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/30 via-primary to-primary/30"></div>
 
             <div className="mb-8">
                 <h3 className="text-2xl font-bold text-text-main dark:text-dark-textMain mb-2">Confirmação de Interesse</h3>
-                <p className="text-text-muted dark:text-dark-textSecondary text-sm">Preencha o formulário abaixo para validar seu direito.</p>
+                <p className="text-gray-600 dark:text-dark-textSecondary text-sm">Preencha o formulário abaixo para validar seu direito.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -130,15 +154,14 @@ export default function FormularioConfirmacao() {
                     <label className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1">Nome Completo</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span className="material-symbols-outlined text-primary-dark dark:text-dark-textMuted">person</span>
+                            <span className="material-symbols-outlined text-primary-darker dark:text-dark-textMuted">person</span>
                         </div>
                         <input
                             type="text"
                             name="nome"
                             value={formData.nome}
                             onChange={handleChange}
-                            className={`w-full h-14 pl-12 pr-4 bg-background-alt dark:bg-dark-bgAlt border-2 rounded-xl text-text-main dark:text-dark-textMain placeholder:text-text-muted/50 dark:placeholder:text-dark-textMuted/50 focus:ring-2 focus:outline-none transition-all
-                                ${errors.nome ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : "border-primary/30 dark:border-dark-border focus:border-primary focus:ring-primary/20"}`}
+                            className={`${inputBaseClass} ${inputBorderClass(!!errors.nome)}`}
                             placeholder="Digite seu nome completo"
                         />
                     </div>
@@ -152,7 +175,7 @@ export default function FormularioConfirmacao() {
                     <label className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1">CPF</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span className="material-symbols-outlined text-primary-dark dark:text-dark-textMuted">id_card</span>
+                            <span className="material-symbols-outlined text-primary-darker dark:text-dark-textMuted">id_card</span>
                         </div>
                         <input
                             type="text"
@@ -160,8 +183,7 @@ export default function FormularioConfirmacao() {
                             value={formData.cpf}
                             onChange={handleCpfChange}
                             maxLength={14}
-                            className={`w-full h-14 pl-12 pr-4 bg-background-alt dark:bg-dark-bgAlt border-2 rounded-xl text-text-main dark:text-dark-textMain placeholder:text-text-muted/50 dark:placeholder:text-dark-textMuted/50 focus:ring-2 focus:outline-none transition-all
-                                ${errors.cpf ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : "border-primary/30 dark:border-dark-border focus:border-primary focus:ring-primary/20"}`}
+                            className={`${inputBaseClass} ${inputBorderClass(!!errors.cpf)}`}
                             placeholder="000.000.000-00"
                         />
                     </div>
@@ -175,15 +197,14 @@ export default function FormularioConfirmacao() {
                     <label className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1">E-mail para contato</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span className="material-symbols-outlined text-primary-dark dark:text-dark-textMuted">mail</span>
+                            <span className="material-symbols-outlined text-primary-darker dark:text-dark-textMuted">mail</span>
                         </div>
                         <input
                             type="email"
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            className={`w-full h-14 pl-12 pr-4 bg-background-alt dark:bg-dark-bgAlt border-2 rounded-xl text-text-main dark:text-dark-textMain placeholder:text-text-muted/50 dark:placeholder:text-dark-textMuted/50 focus:ring-2 focus:outline-none transition-all
-                                ${errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : "border-primary/30 dark:border-dark-border focus:border-primary focus:ring-primary/20"}`}
+                            className={`${inputBaseClass} ${inputBorderClass(!!errors.email)}`}
                             placeholder="seu@email.com"
                         />
                     </div>
@@ -192,11 +213,17 @@ export default function FormularioConfirmacao() {
                     )}
                 </div>
 
-                {/* hCaptcha */}
+                {/* hCaptcha - tema dinâmico */}
                 <div className="flex justify-start min-h-[78px]">
                     {process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY ? (
-                        <div className="h-captcha" data-sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY} data-callback="onHcaptchaSuccess" data-theme="dark"></div>
-                    ) : <p className="text-xs text-red-500 bg-red-900/20 p-2 rounded w-full text-center border border-red-500/30">Configurar SITEKEY</p>}
+                        <div
+                            className="h-captcha"
+                            data-sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY}
+                            data-callback="onHcaptchaSuccess"
+                            data-theme={isDarkMode ? "dark" : "light"}
+                            key={isDarkMode ? "dark" : "light"} // Força re-render ao trocar tema
+                        ></div>
+                    ) : <p className="text-xs text-red-500 bg-red-100 dark:bg-red-900/20 p-2 rounded w-full text-center border border-red-300 dark:border-red-500/30">Configurar SITEKEY</p>}
                 </div>
 
                 {/* Termos - Checkbox customizado */}
@@ -208,12 +235,12 @@ export default function FormularioConfirmacao() {
                             type="checkbox"
                             checked={formData.aceitouTermos}
                             onChange={handleChange}
-                            className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-primary/30 dark:border-dark-border bg-background-alt dark:bg-dark-bgAlt checked:border-primary checked:bg-primary transition-all"
+                            className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-primary dark:border-dark-border bg-white dark:bg-dark-bgAlt checked:border-primary checked:bg-primary transition-all"
                         />
-                        <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[16px] text-white dark:text-dark-bg opacity-0 peer-checked:opacity-100 transition-opacity font-bold">check</span>
+                        <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[16px] text-white opacity-0 peer-checked:opacity-100 transition-opacity font-bold">check</span>
                     </div>
-                    <span className="text-xs text-text-muted dark:text-dark-textSecondary leading-normal pt-0.5">
-                        Declaro que li e aceito os <a href="#" className="text-primary hover:underline font-medium">Termos de Uso</a> e a <a href="#" className="text-primary hover:underline font-medium">Política de Privacidade</a>.
+                    <span className="text-xs text-gray-600 dark:text-dark-textSecondary leading-normal pt-0.5">
+                        Declaro que li e aceito os <a href="#" className="text-primary-dark dark:text-primary hover:underline font-medium">Termos de Uso</a> e a <a href="#" className="text-primary-dark dark:text-primary hover:underline font-medium">Política de Privacidade</a>.
                     </span>
                 </label>
                 {errors.termos && (
@@ -225,7 +252,7 @@ export default function FormularioConfirmacao() {
                     disabled={isSubmitting || !isFormValid()}
                     className={`mt-4 w-full h-14 text-base font-bold rounded-full transition-all transform active:scale-[0.98] flex items-center justify-center gap-2
                         ${isSubmitting || !isFormValid()
-                            ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed text-gray-600 dark:text-gray-400"
+                            ? "bg-gray-300 dark:bg-gray-600 cursor-not-allowed text-gray-500 dark:text-gray-400"
                             : "bg-primary hover:bg-primary-dark text-white shadow-glow hover:shadow-glow-lg"}`}
                 >
                     {isSubmitting ? "Processando..." : (
@@ -237,10 +264,10 @@ export default function FormularioConfirmacao() {
                 </button>
 
                 <div className="text-center mt-2">
-                    <p className="text-[10px] text-text-muted/60 dark:text-dark-textMuted/50 uppercase tracking-widest">Conexão Segura 256-bit SSL</p>
+                    <p className="text-[10px] text-gray-500 dark:text-dark-textMuted/50 uppercase tracking-widest">Conexão Segura 256-bit SSL</p>
                 </div>
 
-                {errors.geral && <div className="text-center text-red-500 text-sm font-bold bg-red-100 dark:bg-red-900/20 p-2 rounded border border-red-300 dark:border-red-500/30">{errors.geral}</div>}
+                {errors.geral && <div className="text-center text-red-600 dark:text-red-500 text-sm font-bold bg-red-100 dark:bg-red-900/20 p-2 rounded border border-red-300 dark:border-red-500/30">{errors.geral}</div>}
             </form>
         </div>
     );

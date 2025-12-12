@@ -44,7 +44,7 @@ export default function Home() {
                             </h1>
 
                             {/* Subheadline */}
-                            <p className="text-text-body dark:text-dark-textBody text-lg md:text-xl font-normal leading-relaxed max-w-2xl">
+                            <p className="text-gray-600 dark:text-dark-textBody text-lg md:text-xl font-normal leading-relaxed max-w-2xl">
                                 Nossa equipe de inteligência jurídica detectou uma oportunidade de restituição em seu nome.
                                 Confirme seus dados para que possamos dar andamento ao processo com total segurança.
                             </p>
@@ -53,24 +53,24 @@ export default function Home() {
                         {/* Cards informativos */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             {/* Card: Dados Protegidos */}
-                            <div className="flex gap-4 p-4 rounded-2xl bg-white dark:bg-dark-surface/30 border-2 border-primary/20 dark:border-dark-border hover:border-primary/40 dark:hover:border-primary/30 transition-colors shadow-sm">
+                            <div className="flex gap-4 p-4 rounded-2xl bg-white dark:bg-dark-surface/30 border-2 border-primary dark:border-dark-border hover:border-primary-dark dark:hover:border-primary/30 transition-colors shadow-sm">
                                 <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-dark-surface flex items-center justify-center shrink-0 text-primary">
                                     <span className="material-symbols-outlined">verified_user</span>
                                 </div>
                                 <div>
                                     <h4 className="text-text-main dark:text-dark-textMain font-bold mb-1">Dados Protegidos</h4>
-                                    <p className="text-sm text-text-muted dark:text-dark-textSecondary">Seus dados são criptografados e seguem estritamente a LGPD.</p>
+                                    <p className="text-sm text-gray-600 dark:text-dark-textSecondary">Seus dados são criptografados e seguem estritamente a LGPD.</p>
                                 </div>
                             </div>
 
                             {/* Card: Equipe Especializada */}
-                            <div className="flex gap-4 p-4 rounded-2xl bg-white dark:bg-dark-surface/30 border-2 border-primary/20 dark:border-dark-border hover:border-primary/40 dark:hover:border-primary/30 transition-colors shadow-sm">
+                            <div className="flex gap-4 p-4 rounded-2xl bg-white dark:bg-dark-surface/30 border-2 border-primary dark:border-dark-border hover:border-primary-dark dark:hover:border-primary/30 transition-colors shadow-sm">
                                 <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-dark-surface flex items-center justify-center shrink-0 text-primary">
                                     <span className="material-symbols-outlined">gavel</span>
                                 </div>
                                 <div>
                                     <h4 className="text-text-main dark:text-dark-textMain font-bold mb-1">Equipe Especializada</h4>
-                                    <p className="text-sm text-text-muted dark:text-dark-textSecondary">Advogados com mais de 20 anos de experiência em restituições.</p>
+                                    <p className="text-sm text-gray-600 dark:text-dark-textSecondary">Advogados com mais de 20 anos de experiência em restituições.</p>
                                 </div>
                             </div>
                         </div>
@@ -88,7 +88,7 @@ export default function Home() {
                                 <p className="text-text-main dark:text-dark-textMain text-sm font-bold">Assessoria Jurídica Ativa</p>
                                 <div className="flex items-center gap-1">
                                     <span className="material-symbols-outlined text-primary text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                    <span className="text-text-muted dark:text-dark-textSecondary text-xs">4.9/5 de satisfação dos clientes</span>
+                                    <span className="text-gray-600 dark:text-dark-textSecondary text-xs">4.9/5 de satisfação dos clientes</span>
                                 </div>
                             </div>
                         </div>
