@@ -77,6 +77,16 @@ export async function gravarConsentimento(
     consentimento: Consentimento
 ): Promise<string> {
     try {
+        // Log dos dados que serão inseridos (sem dados sensíveis completos)
+        console.log("📝 Tentando gravar consentimento:", {
+            cpf: consentimento.cpf.substring(0, 3) + "***",
+            nome: consentimento.nome_fornecido.substring(0, 3) + "***",
+            email: consentimento.email_fornecido.substring(0, 3) + "***",
+            termos_hash: consentimento.termos_hash.substring(0, 10) + "...",
+            ip: consentimento.ip,
+            campaign: consentimento.source_campaign
+        });
+
         const { data, error } = await supabaseServer
             .from("consentimentos")
             .insert([consentimento])
@@ -84,12 +94,23 @@ export async function gravarConsentimento(
             .single();
 
         if (error) {
+            console.error("❌ Erro do Supabase ao inserir:", {
+                message: error.message,
+                code: error.code,
+                details: error.details,
+                hint: error.hint
+            });
             throw error;
         }
 
+        if (!data || !data.id) {
+            throw new Error("Inserção bem-sucedida mas nenhum ID retornado");
+        }
+
+        console.log("✅ Consentimento inserido com sucesso. ID:", data.id);
         return data.id;
-    } catch (error) {
-        console.error("Erro ao gravar consentimento:", error);
+    } catch (error: any) {
+        console.error("❌ Erro ao gravar consentimento:", error);
         throw error;
     }
 }
@@ -113,5 +134,99 @@ export async function listarConsentimentos(): Promise<Consentimento[]> {
     } catch (error) {
         console.error("Erro ao listar consentimentos:", error);
         throw error;
+    }
+}
+
+/**
+ * Rate limiting persistente usando Supabase
+ * @param key - chave única (ip:xxx ou cpf:xxx)
+ * @param maxRequests - número máximo de requests
+ * @param windowMs - janela de tempo em ms
+ * @returns true se dentro do limite, false se excedido
+ */
+export async function verificarRateLimitPersistente(
+    key: string,
+    maxRequests: number,
+    windowMs: number
+): Promise<boolean> {
+    try {
+        const now = new Date();
+        const resetTime = new Date(now.getTime() + windowMs);
+
+        // Buscar ou criar registro
+        const { data: existing, error: fetchError } = await supabaseServer
+            .from("rate_limits")
+            .select("*")
+            .eq("key", key)
+            .single();
+
+        // Se não existe, criar novo
+        if (fetchError && fetchError.code === "PGRST116") {
+            const { error: insertError } = await supabaseServer
+                .from("rate_limits")
+                .insert([{
+                    key,
+                    count: 1,
+                    reset_time: resetTime.toISOString(),
+                }]);
+
+            if (insertError) {
+                console.error("Erro ao criar rate limit:", insertError);
+                // Fallback: permitir se houver erro
+                return true;
+            }
+
+            return true;
+        }
+
+        // Se existe mas expirou, resetar
+        if (existing && new Date(existing.reset_time) < now) {
+            const { error: updateError } = await supabaseServer
+                .from("rate_limits")
+                .update({
+                    count: 1,
+                    reset_time: resetTime.toISOString(),
+                    updated_at: now.toISOString(),
+                })
+                .eq("key", key);
+
+            if (updateError) {
+                console.error("Erro ao resetar rate limit:", updateError);
+                return true;
+            }
+
+            return true;
+        }
+
+        // Se existe e não expirou, verificar limite
+        if (existing) {
+            if (existing.count >= maxRequests) {
+                return false;
+            }
+
+            // Incrementar contador
+            const { error: updateError } = await supabaseServer
+                .from("rate_limits")
+                .update({
+                    count: existing.count + 1,
+                    updated_at: now.toISOString(),
+                })
+                .eq("key", key);
+
+            if (updateError) {
+                console.error("Erro ao atualizar rate limit:", updateError);
+                // Se houver erro, permitir (fail-open para não bloquear usuários legítimos)
+                return true;
+            }
+
+            return true;
+        }
+
+        // Fallback: permitir se algo der errado
+        return true;
+    } catch (error) {
+        console.error("Erro inesperado no rate limiting:", error);
+        // Fail-open: permitir se houver erro crítico
+        return true;
     }
 }

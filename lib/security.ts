@@ -12,7 +12,7 @@ export function hashTermos(textoTermos: string): string {
 /**
  * Extrair IP do request (Vercel, Netlify, CloudFlare)
  * @param request - Next.js Request object
- * @returns IP address ou null
+ * @returns IP address ou null (nunca retorna "unknown")
  */
 export function extrairIP(request: Request): string | null {
     const headers = request.headers;
@@ -20,19 +20,30 @@ export function extrairIP(request: Request): string | null {
     // Tentar headers comuns de proxies/CDNs
     const forwardedFor = headers.get("x-forwarded-for");
     if (forwardedFor) {
-        return forwardedFor.split(",")[0].trim();
+        const ip = forwardedFor.split(",")[0].trim();
+        // Validar formato básico de IP
+        if (ip && /^[\d.]+$/.test(ip) && ip !== "0.0.0.0") {
+            return ip;
+        }
     }
 
     const realIP = headers.get("x-real-ip");
     if (realIP) {
-        return realIP;
+        // Validar formato básico de IP
+        if (realIP && /^[\d.]+$/.test(realIP) && realIP !== "0.0.0.0") {
+            return realIP;
+        }
     }
 
     const cfConnectingIP = headers.get("cf-connecting-ip");
     if (cfConnectingIP) {
-        return cfConnectingIP;
+        // Validar formato básico de IP
+        if (cfConnectingIP && /^[\d.]+$/.test(cfConnectingIP) && cfConnectingIP !== "0.0.0.0") {
+            return cfConnectingIP;
+        }
     }
 
+    // Não retornar "unknown" - retornar null para ser rejeitado
     return null;
 }
 
@@ -65,7 +76,8 @@ setInterval(() => {
 }, 60000); // Limpar a cada minuto
 
 /**
- * Verificar rate limit por chave (IP ou CPF)
+ * Verificar rate limit por chave (IP ou CPF) - FALLBACK EM MEMÓRIA
+ * Usado apenas se o rate limiting persistente falhar
  * @param key - chave única (ip:xxx ou cpf:xxx)
  * @param maxRequests - número máximo de requests
  * @param windowMs - janela de tempo em ms
