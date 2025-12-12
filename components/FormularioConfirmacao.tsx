@@ -21,7 +21,30 @@ export default function FormularioConfirmacao() {
     // Capturar parâmetro de campanha da URL (ex: ?campaign=novembro-2025)
     const campaign = searchParams.get("campaign") || null;
 
+    // Renderizar/resetar hCaptcha
+    const renderCaptcha = () => {
+        const captchaContainer = document.querySelector('.h-captcha');
+        if (captchaContainer && (window as unknown as { hcaptcha?: { render: (el: Element, opts: object) => void; reset: () => void } }).hcaptcha) {
+            const hcaptcha = (window as unknown as { hcaptcha: { render: (el: Element, opts: object) => void; reset: () => void } }).hcaptcha;
+            try {
+                // Limpar container antes de re-renderizar
+                captchaContainer.innerHTML = '';
+                hcaptcha.render(captchaContainer, {
+                    sitekey: process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY,
+                    callback: 'onHcaptchaSuccess',
+                    theme: document.documentElement.classList.contains("dark") ? "dark" : "light"
+                });
+            } catch {
+                // Widget já renderizado, apenas resetar
+                hcaptcha.reset();
+            }
+        }
+    };
+
     useEffect(() => {
+        // Resetar token ao montar
+        setHcaptchaToken(null);
+
         // Detectar tema atual
         const checkTheme = () => {
             setIsDarkMode(document.documentElement.classList.contains("dark"));
@@ -32,14 +55,26 @@ export default function FormularioConfirmacao() {
         const observer = new MutationObserver(checkTheme);
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
-        const script = document.createElement("script");
-        script.src = "https://hcaptcha.com/1/api.js";
-        script.async = true;
-        script.defer = true;
-        document.head.appendChild(script);
+        // Callback global para hCaptcha
         window.onHcaptchaSuccess = (token: string) => setHcaptchaToken(token);
+
+        // Verificar se script já existe
+        const existingScript = document.querySelector('script[src="https://hcaptcha.com/1/api.js"]');
+
+        if (existingScript) {
+            // Script já carregado, re-renderizar captcha
+            setTimeout(renderCaptcha, 100);
+        } else {
+            // Carregar script pela primeira vez
+            const script = document.createElement("script");
+            script.src = "https://hcaptcha.com/1/api.js?render=explicit";
+            script.async = true;
+            script.defer = true;
+            script.onload = () => setTimeout(renderCaptcha, 100);
+            document.head.appendChild(script);
+        }
+
         return () => {
-            document.head.removeChild(script);
             observer.disconnect();
         };
     }, []);
@@ -215,16 +250,10 @@ export default function FormularioConfirmacao() {
                     )}
                 </div>
 
-                {/* hCaptcha - tema dinâmico */}
+                {/* hCaptcha - renderizado explicitamente */}
                 <div className="flex justify-start min-h-[78px]">
                     {process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY ? (
-                        <div
-                            className="h-captcha"
-                            data-sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY}
-                            data-callback="onHcaptchaSuccess"
-                            data-theme={isDarkMode ? "dark" : "light"}
-                            key={isDarkMode ? "dark" : "light"} // Força re-render ao trocar tema
-                        ></div>
+                        <div className="h-captcha"></div>
                     ) : <p className="text-xs text-red-500 bg-red-100 dark:bg-red-900/20 p-2 rounded w-full text-center border border-red-300 dark:border-red-500/30">Configurar SITEKEY</p>}
                 </div>
 
