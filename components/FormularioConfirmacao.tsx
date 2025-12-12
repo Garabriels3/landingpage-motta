@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { validarCPF, limparCPF } from "@/lib/validations";
+import LegalModal from "./LegalModal";
 
 declare global {
     interface Window { hcaptcha: unknown; onHcaptchaSuccess: (token: string) => void; }
@@ -15,6 +16,7 @@ export default function FormularioConfirmacao() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hcaptchaToken, setHcaptchaToken] = useState<string | null>(null);
     const [isDarkMode, setIsDarkMode] = useState(true);
+    const [modalType, setModalType] = useState<"termos" | "privacidade" | null>(null);
 
     // Capturar parâmetro de campanha da URL (ex: ?campaign=novembro-2025)
     const campaign = searchParams.get("campaign") || null;
@@ -226,7 +228,6 @@ export default function FormularioConfirmacao() {
                     ) : <p className="text-xs text-red-500 bg-red-100 dark:bg-red-900/20 p-2 rounded w-full text-center border border-red-300 dark:border-red-500/30">Configurar SITEKEY</p>}
                 </div>
 
-                {/* Termos - Checkbox customizado */}
                 <label className="flex items-start gap-3 mt-2 cursor-pointer group/check">
                     <div className="relative flex items-center">
                         <input
@@ -240,7 +241,10 @@ export default function FormularioConfirmacao() {
                         <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[16px] text-white opacity-0 peer-checked:opacity-100 transition-opacity font-bold">check</span>
                     </div>
                     <span className="text-xs text-gray-600 dark:text-dark-textSecondary leading-normal pt-0.5">
-                        Declaro que li e aceito os <a href="#" className="text-primary-dark dark:text-primary hover:underline font-medium">Termos de Uso</a> e a <a href="#" className="text-primary-dark dark:text-primary hover:underline font-medium">Política de Privacidade</a>.
+                        Declaro que li e aceito os{" "}
+                        <button type="button" onClick={() => setModalType("termos")} className="text-primary-dark dark:text-primary hover:underline font-medium">Termos de Uso</button>
+                        {" "}e a{" "}
+                        <button type="button" onClick={() => setModalType("privacidade")} className="text-primary-dark dark:text-primary hover:underline font-medium">Política de Privacidade</button>.
                     </span>
                 </label>
                 {errors.termos && (
@@ -269,6 +273,13 @@ export default function FormularioConfirmacao() {
 
                 {errors.geral && <div className="text-center text-red-600 dark:text-red-500 text-sm font-bold bg-red-100 dark:bg-red-900/20 p-2 rounded border border-red-300 dark:border-red-500/30">{errors.geral}</div>}
             </form>
+
+            {/* Modal de Termos/Políticas */}
+            <LegalModal
+                isOpen={modalType !== null}
+                onClose={() => setModalType(null)}
+                type={modalType || "termos"}
+            />
         </div>
     );
 }
