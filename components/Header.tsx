@@ -1,4 +1,6 @@
+"use client";
 import React from "react";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
     return (
@@ -15,10 +17,16 @@ export default function Header() {
                     </div>
                 </div>
 
-                {/* Badge de Segurança */}
-                <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-dark-surface/50 border border-primary/30 dark:border-dark-border rounded-full">
-                    <span className="material-symbols-outlined text-primary text-[18px]">lock</span>
-                    <span className="text-sm font-semibold text-text-main dark:text-dark-textMain tracking-wide">Ambiente Seguro</span>
+                {/* Right Side - Badge + Theme Toggle */}
+                <div className="flex items-center gap-3">
+                    {/* Badge de Segurança */}
+                    <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-dark-surface/50 border border-primary/30 dark:border-dark-border rounded-full">
+                        <span className="material-symbols-outlined text-primary text-[18px]">lock</span>
+                        <span className="text-sm font-semibold text-text-main dark:text-dark-textMain tracking-wide">Ambiente Seguro</span>
+                    </div>
+
+                    {/* Theme Toggle */}
+                    <ThemeToggle />
                 </div>
             </div>
         </header>

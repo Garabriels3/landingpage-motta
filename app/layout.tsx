@@ -27,8 +27,21 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="pt-BR" className="dark">
+        <html lang="pt-BR" suppressHydrationWarning>
             <head>
+                {/* Script para evitar flash de tema errado */}
+                <script dangerouslySetInnerHTML={{
+                    __html: `
+                        (function() {
+                            var theme = localStorage.getItem('theme');
+                            if (theme === 'light') {
+                                document.documentElement.classList.remove('dark');
+                            } else {
+                                document.documentElement.classList.add('dark');
+                            }
+                        })();
+                    `
+                }} />
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
                 <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
