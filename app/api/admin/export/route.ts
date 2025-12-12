@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listarConsentimentos } from "@/lib/supabase";
 
+// Forçar renderização dinâmica (usa request.headers)
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/admin/export
  * Endpoint protegido para exportar consentimentos (admin only)

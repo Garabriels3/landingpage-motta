@@ -3,6 +3,9 @@ import { validarCPF, validarEmail, validarNome, validarComprimento, limparCPF } 
 import { buscarProcessoPorCPF, gravarConsentimento } from "@/lib/supabase";
 import { extrairIP, extrairUserAgent, verificarRateLimit, TERMOS_HASH } from "@/lib/security";
 
+// Forçar renderização dinâmica (usa request.headers e request.json)
+export const dynamic = 'force-dynamic';
+
 // Rate limit config
 const RATE_LIMIT_IP = 10; // 10 requests por hora por IP
 const RATE_LIMIT_CPF = 3; // 3 requests por hora por CPF
