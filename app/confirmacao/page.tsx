@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { tracking } from "@/lib/tracking";
 
 function ConfirmacaoContent() {
     const searchParams = useSearchParams();
@@ -18,6 +19,11 @@ function ConfirmacaoContent() {
             return;
         }
         setNumeroProcesso(numero);
+        
+        // Track page view
+        tracking.pageView("/confirmacao", {
+            processo_encontrado: numero !== "nao-encontrado",
+        });
     }, [searchParams, router]);
 
     const handleCopiar = () => {
@@ -25,6 +31,9 @@ function ConfirmacaoContent() {
             navigator.clipboard.writeText(numeroProcesso);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
+            
+            // Track copy action
+            tracking.copyProcessoNumber(numeroProcesso);
         }
     };
 
@@ -41,6 +50,12 @@ function ConfirmacaoContent() {
             : `https://web.whatsapp.com/send?phone=${telefone}&text=${mensagemEncoded}`;
 
         window.open(url, "_blank");
+        
+        // Track WhatsApp click
+        tracking.whatsappClicked(undefined, {
+            processo_encontrado: numeroProcesso !== "nao-encontrado",
+            numero_processo: numeroProcesso !== "nao-encontrado" ? numeroProcesso : null,
+        });
     };
 
     if (!numeroProcesso) {

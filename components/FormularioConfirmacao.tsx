@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { validarCPF, limparCPF } from "@/lib/validations";
 import LegalModal from "./LegalModal";
+import { tracking } from "@/lib/tracking";
 
 declare global {
     interface Window { hcaptcha: unknown; onHcaptchaSuccess: (token: string) => void; }
@@ -42,6 +43,9 @@ export default function FormularioConfirmacao() {
     };
 
     useEffect(() => {
+        // Track form started
+        tracking.formStarted("confirmacao_interesse");
+        
         // Resetar token ao montar
         setHcaptchaToken(null);
 
@@ -87,6 +91,11 @@ export default function FormularioConfirmacao() {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
         if (errors[name as keyof typeof errors]) setErrors(prev => ({ ...prev, [name]: undefined }));
+        
+        // Track field focus
+        if (type !== "checkbox" && value.length === 1) {
+            tracking.formFieldFocused(name, "confirmacao_interesse");
+        }
     };
 
     const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,10 +165,31 @@ export default function FormularioConfirmacao() {
             });
             const data = await response.json();
             if (response.ok) {
+                // Track form submitted successfully
+                const cpfLimpo = limparCPF(formData.cpf);
+                tracking.formSubmitted("confirmacao_interesse", true, {
+                    cpf: cpfLimpo.substring(0, 3) + "***",
+                });
+                
+                // Track consent given
+                tracking.consentGiven(cpfLimpo);
+                
                 // Passar o número do processo na URL (ou "nao-encontrado" se não houver)
                 const numeroProcesso = data.numero_processo || "nao-encontrado";
+                
+                // Track processo found/not found
+                if (numeroProcesso !== "nao-encontrado") {
+                    tracking.processoFound(cpfLimpo, numeroProcesso);
+                } else {
+                    tracking.processoNotFound(cpfLimpo);
+                }
+                
                 router.push(`/confirmacao?numero=${encodeURIComponent(numeroProcesso)}`);
             } else {
+                // Track form submission error
+                tracking.formSubmitted("confirmacao_interesse", false, {
+                    error: data.error,
+                });
                 setErrors({ geral: data.error || "Erro ao processar" });
             }
         } catch {

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Header from "@/components/Header";
 import FormularioConfirmacao from "@/components/FormularioConfirmacao";
 import Footer from "@/components/Footer";
+import PageViewTracker from "@/components/PageViewTracker";
 
 function FormLoading() {
     return (
@@ -14,6 +15,7 @@ function FormLoading() {
 export default function Home() {
     return (
         <div className="min-h-screen flex flex-col overflow-x-hidden">
+            <PageViewTracker pagina="/" />
             {/* Background Effects */}
             <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
                 <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary/10 dark:bg-primary/5 rounded-full blur-[120px]"></div>
