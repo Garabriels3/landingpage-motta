@@ -45,11 +45,15 @@ export default function FormularioConfirmacao() {
         // Resetar token ao montar
         setHcaptchaToken(null);
 
-        // Detectar tema atual
+        // Detectar tema atual e re-renderizar captcha
         const checkTheme = () => {
             setIsDarkMode(document.documentElement.classList.contains("dark"));
+            // Re-renderizar hCaptcha quando o tema mudar
+            renderCaptcha();
         };
-        checkTheme();
+
+        // Aplicar tema inicial
+        setIsDarkMode(document.documentElement.classList.contains("dark"));
 
         // Observer para mudanças no tema
         const observer = new MutationObserver(checkTheme);
