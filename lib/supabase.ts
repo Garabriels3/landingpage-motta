@@ -1,17 +1,31 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY!;
+// Função para obter o cliente Supabase (lazy para não quebrar build)
+function getSupabaseClient(): SupabaseClient {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error("Missing Supabase environment variables");
+    if (!supabaseUrl || !supabaseServiceKey) {
+        throw new Error("Missing Supabase environment variables");
+    }
+
+    return createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+        },
+    });
 }
 
 // Client com service role key (apenas server-side!)
-export const supabaseServer = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false,
+// Usa getter para inicialização lazy
+let _supabaseServer: SupabaseClient | null = null;
+export const supabaseServer = new Proxy({} as SupabaseClient, {
+    get(_target, prop) {
+        if (!_supabaseServer) {
+            _supabaseServer = getSupabaseClient();
+        }
+        return (_supabaseServer as any)[prop];
     },
 });
 

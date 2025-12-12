@@ -54,8 +54,8 @@ export default function AnalyticsPage() {
         }
     };
 
-    const tiposUnicos = Array.from(new Set(eventos.map(e => e.evento_tipo)));
-    const paginasUnicas = Array.from(new Set(eventos.map(e => e.pagina).filter(Boolean)));
+    const tiposUnicos = Array.from(new Set(eventos.map(e => e.evento_tipo).filter(Boolean)));
+    const paginasUnicas = Array.from(new Set(eventos.map(e => e.pagina).filter((p): p is string => Boolean(p))));
 
     if (loading) {
         return (

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +9,24 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest) {
     try {
+        // Criar cliente Supabase (lazy para não quebrar build)
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+        if (!supabaseUrl || !supabaseServiceKey) {
+            return NextResponse.json(
+                { error: "Supabase não configurado" },
+                { status: 503 }
+            );
+        }
+
+        const supabaseServer = createClient(supabaseUrl, supabaseServiceKey, {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false,
+            },
+        });
+
         const { searchParams } = new URL(request.url);
         const tipoFiltro = searchParams.get("tipo");
         const paginaFiltro = searchParams.get("pagina");

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { extrairIP, extrairUserAgent } from "@/lib/security";
 
 export const dynamic = 'force-dynamic';
@@ -30,6 +30,25 @@ export async function POST(request: NextRequest) {
         // Sanitizar dados
         const ip = extrairIP(request);
         const userAgent = extrairUserAgent(request);
+
+        // Criar cliente Supabase (lazy para não quebrar build)
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+        if (!supabaseUrl || !supabaseServiceKey) {
+            console.error("Supabase não configurado");
+            return NextResponse.json(
+                { error: "Serviço temporariamente indisponível" },
+                { status: 503 }
+            );
+        }
+
+        const supabaseServer = createClient(supabaseUrl, supabaseServiceKey, {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false,
+            },
+        });
 
         // Inserir evento
         const { data, error } = await supabaseServer

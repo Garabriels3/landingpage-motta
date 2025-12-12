@@ -100,3 +100,4 @@ async function verificarTabelas() {
 
 verificarTabelas();
 
+

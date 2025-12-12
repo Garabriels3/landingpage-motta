@@ -148,3 +148,4 @@ Após configurar e fazer deploy:
 - Verifique se `SUPABASE_SERVICE_KEY` é a **service_role** key (não a anon key)
 - Verifique se as tabelas existem no Supabase
 
+
