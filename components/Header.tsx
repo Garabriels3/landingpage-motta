@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import ThemeToggle from "./ThemeToggle";
+import ConteudoText from "./ConteudoText";
 
 export default function Header() {
     return (
@@ -12,8 +13,18 @@ export default function Header() {
                         <span className="material-symbols-outlined text-2xl">balance</span>
                     </div>
                     <div>
-                        <h2 className="text-text-main dark:text-dark-textMain text-lg font-bold leading-tight tracking-tight">Wagner Chaves</h2>
-                        <p className="text-text-muted dark:text-dark-textSecondary text-xs font-medium tracking-wide uppercase">Advocacia Especializada</p>
+                        <ConteudoText
+                            chave="header.logo.nome"
+                            fallback="Wagner Chaves"
+                            className="text-text-main dark:text-dark-textMain text-lg font-bold leading-tight tracking-tight"
+                            as="h2"
+                        />
+                        <ConteudoText
+                            chave="header.logo.subtitulo"
+                            fallback="Advocacia Especializada"
+                            className="text-text-muted dark:text-dark-textSecondary text-xs font-medium tracking-wide uppercase"
+                            as="p"
+                        />
                     </div>
                 </div>
 
@@ -22,7 +33,12 @@ export default function Header() {
                     {/* Badge de Segurança */}
                     <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-dark-surface/50 border border-primary/30 dark:border-dark-border rounded-full">
                         <span className="material-symbols-outlined text-primary text-[18px]">lock</span>
-                        <span className="text-sm font-semibold text-text-main dark:text-dark-textMain tracking-wide">Ambiente Seguro</span>
+                        <ConteudoText
+                            chave="header.badge"
+                            fallback="Ambiente Seguro"
+                            className="text-sm font-semibold text-text-main dark:text-dark-textMain tracking-wide"
+                            as="span"
+                        />
                     </div>
 
                     {/* Theme Toggle */}

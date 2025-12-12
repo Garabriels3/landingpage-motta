@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { validarCPF, limparCPF } from "@/lib/validations";
 import LegalModal from "./LegalModal";
 import { tracking } from "@/lib/tracking";
+import ConteudoText from "./ConteudoText";
 
 declare global {
     interface Window { hcaptcha: unknown; onHcaptchaSuccess: (token: string) => void; }
@@ -215,14 +216,29 @@ export default function FormularioConfirmacao() {
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/30 via-primary to-primary/30"></div>
 
             <div className="mb-8">
-                <h3 className="text-2xl font-bold text-text-main dark:text-dark-textMain mb-2">Confirmação de Interesse</h3>
-                <p className="text-gray-600 dark:text-dark-textSecondary text-sm">Preencha o formulário abaixo para validar seu direito.</p>
+                <ConteudoText
+                    chave="form.titulo"
+                    fallback="Confirmação de Interesse"
+                    className="text-2xl font-bold text-text-main dark:text-dark-textMain mb-2"
+                    as="h3"
+                />
+                <ConteudoText
+                    chave="form.subtitulo"
+                    fallback="Preencha o formulário abaixo para validar seu direito."
+                    className="text-gray-600 dark:text-dark-textSecondary text-sm"
+                    as="p"
+                />
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                 {/* Nome */}
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1">Nome Completo</label>
+                    <ConteudoText
+                        chave="form.nome.label"
+                        fallback="Nome Completo"
+                        className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1"
+                        as="label"
+                    />
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <span className="material-symbols-outlined text-primary-darker dark:text-dark-textMuted">person</span>
@@ -243,7 +259,12 @@ export default function FormularioConfirmacao() {
 
                 {/* CPF */}
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1">CPF</label>
+                    <ConteudoText
+                        chave="form.cpf.label"
+                        fallback="CPF"
+                        className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1"
+                        as="label"
+                    />
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <span className="material-symbols-outlined text-primary-darker dark:text-dark-textMuted">id_card</span>
@@ -265,7 +286,12 @@ export default function FormularioConfirmacao() {
 
                 {/* Email */}
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1">E-mail para contato</label>
+                    <ConteudoText
+                        chave="form.email.label"
+                        fallback="E-mail para contato"
+                        className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1"
+                        as="label"
+                    />
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <span className="material-symbols-outlined text-primary-darker dark:text-dark-textMuted">mail</span>
@@ -304,7 +330,12 @@ export default function FormularioConfirmacao() {
                         <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[16px] text-white opacity-0 peer-checked:opacity-100 transition-opacity font-bold">check</span>
                     </div>
                     <span className="text-xs text-gray-600 dark:text-dark-textSecondary leading-normal pt-0.5">
-                        Declaro que li e aceito os{" "}
+                        <ConteudoText
+                            chave="form.termos.texto"
+                            fallback='Declaro que li e aceito os Termos de Uso e a Política de Privacidade.'
+                            as="span"
+                        />
+                        {" "}
                         <button type="button" onClick={() => setModalType("termos")} className="text-primary-dark dark:text-primary hover:underline font-medium">Termos de Uso</button>
                         {" "}e a{" "}
                         <button type="button" onClick={() => setModalType("privacidade")} className="text-primary-dark dark:text-primary hover:underline font-medium">Política de Privacidade</button>.
@@ -322,9 +353,19 @@ export default function FormularioConfirmacao() {
                             ? "bg-gray-300 dark:bg-gray-600 cursor-not-allowed text-gray-500 dark:text-gray-400"
                             : "bg-primary hover:bg-primary-dark text-white shadow-glow hover:shadow-glow-lg"}`}
                 >
-                    {isSubmitting ? "Processando..." : (
+                    {isSubmitting ? (
+                        <ConteudoText
+                            chave="form.botao.processando"
+                            fallback="Processando..."
+                            as="span"
+                        />
+                    ) : (
                         <>
-                            Confirmar Interesse
+                            <ConteudoText
+                                chave="form.botao"
+                                fallback="Confirmar Interesse"
+                                as="span"
+                            />
                             <span className="material-symbols-outlined text-xl font-bold">arrow_forward</span>
                         </>
                     )}

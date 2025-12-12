@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { tracking } from "@/lib/tracking";
+import ConteudoText from "@/components/ConteudoText";
 
 function ConfirmacaoContent() {
     const searchParams = useSearchParams();
@@ -89,14 +90,20 @@ function ConfirmacaoContent() {
 
                     {/* Título */}
                     <div className="text-center space-y-3">
-                        <h1 className="text-3xl md:text-4xl font-bold text-text-main dark:text-dark-textMain">
-                            Interesse Confirmado
-                        </h1>
-                        <p className="text-gray-600 dark:text-dark-textSecondary max-w-lg mx-auto leading-relaxed">
-                            {encontrado
+                        <ConteudoText
+                            chave="confirmacao.titulo"
+                            fallback="Interesse Confirmado"
+                            className="text-3xl md:text-4xl font-bold text-text-main dark:text-dark-textMain"
+                            as="h1"
+                        />
+                        <ConteudoText
+                            chave={encontrado ? "confirmacao.subtitulo.encontrado" : "confirmacao.subtitulo.nao_encontrado"}
+                            fallback={encontrado
                                 ? "Recebemos sua solicitação. Identificamos um processo jurídico em seu nome com status ativo. Confira os dados oficiais abaixo."
                                 : "Recebemos sua solicitação. Não encontramos um processo ativo no momento, mas nossa equipe pode analisar outras oportunidades."}
-                        </p>
+                            className="text-gray-600 dark:text-dark-textSecondary max-w-lg mx-auto leading-relaxed"
+                            as="p"
+                        />
                     </div>
 
                     {/* Card com número do processo */}
@@ -106,7 +113,11 @@ function ConfirmacaoContent() {
 
                             <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider justify-center">
                                 <span className="material-symbols-outlined text-lg">description</span>
-                                <span>Número do Processo Unificado</span>
+                                <ConteudoText
+                                    chave="confirmacao.processo.label"
+                                    fallback="Número do Processo Unificado"
+                                    as="span"
+                                />
                             </div>
 
                             <div className="bg-background dark:bg-dark-bgAlt border-2 border-primary/30 dark:border-dark-border rounded-xl p-8 shadow-inner">
@@ -122,52 +133,102 @@ function ConfirmacaoContent() {
                                 {copied ? (
                                     <>
                                         <span className="material-symbols-outlined">check</span>
-                                        Copiado!
+                                        <ConteudoText
+                                            chave="confirmacao.processo.copiado"
+                                            fallback="Copiado!"
+                                            as="span"
+                                        />
                                     </>
                                 ) : (
                                     <>
                                         <span className="material-symbols-outlined">content_copy</span>
-                                        Copiar Número
+                                        <ConteudoText
+                                            chave="confirmacao.processo.copiar"
+                                            fallback="Copiar Número"
+                                            as="span"
+                                        />
                                     </>
                                 )}
                             </button>
 
                             <div className="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-dark-textMuted pt-2 border-t border-dashed border-primary/20 dark:border-dark-border">
                                 <span className="material-symbols-outlined text-sm">lock</span>
-                                <p>Dados protegidos por sigilo profissional e LGPD.</p>
+                                <ConteudoText
+                                    chave="confirmacao.processo.protegido"
+                                    fallback="Dados protegidos por sigilo profissional e LGPD."
+                                    as="p"
+                                />
                             </div>
                         </div>
                     ) : (
                         <div className="bg-white dark:bg-dark-paper p-8 rounded-3xl border-2 border-primary dark:border-dark-border shadow-lg text-center space-y-4">
-                            <p className="text-gray-700 dark:text-dark-textBody">
-                                Não localizamos um processo ativo neste momento, mas isso não significa que você não tenha direitos a receber.
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-dark-textMuted">
-                                Nossa equipe pode realizar uma análise mais detalhada e identificar outras oportunidades de restituição.
-                            </p>
+                            <ConteudoText
+                                chave="confirmacao.nao_encontrado.texto1"
+                                fallback="Não localizamos um processo ativo neste momento, mas isso não significa que você não tenha direitos a receber."
+                                className="text-gray-700 dark:text-dark-textBody"
+                                as="p"
+                            />
+                            <ConteudoText
+                                chave="confirmacao.nao_encontrado.texto2"
+                                fallback="Nossa equipe pode realizar uma análise mais detalhada e identificar outras oportunidades de restituição."
+                                className="text-sm text-gray-500 dark:text-dark-textMuted"
+                                as="p"
+                            />
                         </div>
                     )}
 
                     {/* Instruções de consulta */}
                     {encontrado && (
                         <div className="space-y-4">
-                            <h2 className="font-bold text-text-main dark:text-dark-textMain text-lg border-b border-primary/30 dark:border-dark-border pb-2">
-                                Como consultar seu processo:
-                            </h2>
+                            <ConteudoText
+                                chave="confirmacao.consulta.titulo"
+                                fallback="Como consultar seu processo:"
+                                className="font-bold text-text-main dark:text-dark-textMain text-lg border-b border-primary/30 dark:border-dark-border pb-2"
+                                as="h2"
+                            />
 
                             <div className="space-y-4">
                                 {[
-                                    { num: 1, title: "Copie o número", desc: "Utilize o botão \"Copiar\" no cartão acima." },
-                                    { num: 2, title: "Acesse o portal de consultas", desc: "Recomendamos o site JusBrasil.", link: "https://www.jusbrasil.com.br" },
-                                    { num: 3, title: "Cole na barra de busca", desc: "No campo de pesquisa, cole o número para visualizar as movimentações." },
+                                    { 
+                                        num: 1, 
+                                        chaveTitulo: "confirmacao.consulta.passo1.titulo",
+                                        chaveTexto: "confirmacao.consulta.passo1.texto",
+                                        title: "Copie o número", 
+                                        desc: "Utilize o botão \"Copiar\" no cartão acima." 
+                                    },
+                                    { 
+                                        num: 2, 
+                                        chaveTitulo: "confirmacao.consulta.passo2.titulo",
+                                        chaveTexto: "confirmacao.consulta.passo2.texto",
+                                        title: "Acesse o portal de consultas", 
+                                        desc: "Recomendamos o site JusBrasil.", 
+                                        link: "https://www.jusbrasil.com.br" 
+                                    },
+                                    { 
+                                        num: 3, 
+                                        chaveTitulo: "confirmacao.consulta.passo3.titulo",
+                                        chaveTexto: "confirmacao.consulta.passo3.texto",
+                                        title: "Cole na barra de busca", 
+                                        desc: "No campo de pesquisa, cole o número para visualizar as movimentações." 
+                                    },
                                 ].map((step) => (
                                     <div key={step.num} className="flex items-start gap-4 p-4 bg-white dark:bg-dark-surface/50 rounded-2xl border-2 border-primary/20 dark:border-dark-border">
                                         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white font-bold shadow-sm">
                                             {step.num}
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-text-main dark:text-dark-textMain mb-1">{step.title}</h3>
-                                            <p className="text-sm text-gray-600 dark:text-dark-textSecondary">{step.desc}</p>
+                                            <ConteudoText
+                                                chave={step.chaveTitulo}
+                                                fallback={step.title}
+                                                className="font-bold text-text-main dark:text-dark-textMain mb-1"
+                                                as="h3"
+                                            />
+                                            <ConteudoText
+                                                chave={step.chaveTexto}
+                                                fallback={step.desc}
+                                                className="text-sm text-gray-600 dark:text-dark-textSecondary"
+                                                as="p"
+                                            />
                                             {step.link && (
                                                 <a
                                                     href={step.link}
@@ -188,12 +249,18 @@ function ConfirmacaoContent() {
 
                     {/* CTA WhatsApp */}
                     <div className="bg-white dark:bg-dark-paper p-6 rounded-3xl border-2 border-primary dark:border-dark-border shadow-glow space-y-4">
-                        <h3 className="font-bold text-text-main dark:text-dark-textMain text-center text-lg">
-                            Precisa de orientação especializada?
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-dark-textSecondary text-center max-w-lg mx-auto">
-                            Nossa equipe já analisou seu caso e pode explicar os próximos passos.
-                        </p>
+                        <ConteudoText
+                            chave="confirmacao.whatsapp.titulo"
+                            fallback="Precisa de orientação especializada?"
+                            className="font-bold text-text-main dark:text-dark-textMain text-center text-lg"
+                            as="h3"
+                        />
+                        <ConteudoText
+                            chave="confirmacao.whatsapp.texto"
+                            fallback="Nossa equipe já analisou seu caso e pode explicar os próximos passos."
+                            className="text-sm text-gray-600 dark:text-dark-textSecondary text-center max-w-lg mx-auto"
+                            as="p"
+                        />
 
                         <button
                             onClick={handleWhatsApp}
@@ -202,18 +269,36 @@ function ConfirmacaoContent() {
                             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                             </svg>
-                            Falar no WhatsApp
-                            <span className="text-xs opacity-75 font-normal ml-1 border-l border-white/30 pl-2">Resposta em 5min</span>
+                            <ConteudoText
+                                chave="confirmacao.whatsapp.botao"
+                                fallback="Falar no WhatsApp"
+                                as="span"
+                            />
+                            <span className="text-xs opacity-75 font-normal ml-1 border-l border-white/30 pl-2">
+                                <ConteudoText
+                                    chave="confirmacao.whatsapp.resposta"
+                                    fallback="Resposta em 5min"
+                                    as="span"
+                                />
+                            </span>
                         </button>
 
                         <div className="flex items-center justify-center gap-4 text-xs text-text-muted">
                             <span className="flex items-center gap-1">
                                 <span className="material-symbols-outlined text-primary text-sm">verified</span>
-                                Advogados Especializados
+                                <ConteudoText
+                                    chave="confirmacao.whatsapp.badge1"
+                                    fallback="Advogados Especializados"
+                                    as="span"
+                                />
                             </span>
                             <span className="flex items-center gap-1">
                                 <span className="material-symbols-outlined text-primary text-sm">bolt</span>
-                                Atendimento Rápido
+                                <ConteudoText
+                                    chave="confirmacao.whatsapp.badge2"
+                                    fallback="Atendimento Rápido"
+                                    as="span"
+                                />
                             </span>
                         </div>
                     </div>
@@ -225,7 +310,11 @@ function ConfirmacaoContent() {
                             className="text-sm font-medium text-text-muted hover:text-primary transition-colors flex items-center justify-center gap-2 mx-auto"
                         >
                             <span className="material-symbols-outlined text-sm">arrow_back</span>
-                            Voltar para o início
+                            <ConteudoText
+                                chave="confirmacao.voltar"
+                                fallback="Voltar para o início"
+                                as="span"
+                            />
                         </button>
                     </div>
                 </div>

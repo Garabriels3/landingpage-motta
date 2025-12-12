@@ -32,6 +32,17 @@ export default function AdminConteudosPage() {
         }
     }, []);
 
+    // Recarregar conteúdos quando filtro mudar
+    useEffect(() => {
+        if (autenticado) {
+            const token = localStorage.getItem("admin_token");
+            if (token) {
+                carregarConteudos(token);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filtroPagina]);
+
     const verificarToken = async (token: string) => {
         try {
             const response = await fetch("/api/admin/conteudos", {
@@ -78,18 +89,21 @@ export default function AdminConteudosPage() {
         setCarregando(true);
         try {
             const url = filtroPagina !== "all"
-                ? `/api/admin/conteudos?pagina=${filtroPagina}`
+                ? `/api/admin/conteudos?pagina=${encodeURIComponent(filtroPagina)}`
                 : "/api/admin/conteudos";
 
             const response = await fetch(url, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
+                cache: 'no-store',
             });
 
             if (response.ok) {
                 const data = await response.json();
                 setConteudos(data.data || []);
+            } else {
+                console.error("Erro ao carregar conteúdos:", response.status, response.statusText);
             }
         } catch (error) {
             console.error("Erro ao carregar conteúdos:", error);
@@ -200,13 +214,7 @@ export default function AdminConteudosPage() {
                             {/* Filtro */}
                             <select
                                 value={filtroPagina}
-                                onChange={(e) => {
-                                    setFiltroPagina(e.target.value);
-                                    const token = localStorage.getItem("admin_token");
-                                    if (token) {
-                                        carregarConteudos(token);
-                                    }
-                                }}
+                                onChange={(e) => setFiltroPagina(e.target.value)}
                                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             >
                                 <option value="all">Todas as páginas</option>
