@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { validarCPF, limparCPF } from "@/lib/validations";
 
 declare global {
     interface Window { hcaptcha: unknown; onHcaptchaSuccess: (token: string) => void; }
@@ -8,10 +9,14 @@ declare global {
 
 export default function FormularioConfirmacao() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [formData, setFormData] = useState({ nome: "", cpf: "", email: "", aceitouTermos: false });
     const [errors, setErrors] = useState<{ nome?: string; cpf?: string; email?: string; termos?: string; geral?: string }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hcaptchaToken, setHcaptchaToken] = useState<string | null>(null);
+    
+    // Capturar parâmetro de campanha da URL (ex: ?campaign=novembro-2025)
+    const campaign = searchParams.get("campaign") || null;
 
     useEffect(() => {
         const script = document.createElement("script");
@@ -34,14 +39,31 @@ export default function FormularioConfirmacao() {
         if (value.length > 11) value = value.slice(0, 11);
         value = value.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
         setFormData(prev => ({ ...prev, cpf: value }));
-        if (errors.cpf) setErrors(prev => ({ ...prev, cpf: undefined }));
+        
+        // Validar CPF em tempo real quando tiver 11 dígitos
+        const cpfLimpo = limparCPF(value);
+        if (cpfLimpo.length === 11) {
+            if (!validarCPF(cpfLimpo)) {
+                setErrors(prev => ({ ...prev, cpf: "CPF inválido. Verifique os números digitados." }));
+            } else {
+                setErrors(prev => ({ ...prev, cpf: undefined }));
+            }
+        } else {
+            // Limpar erro se ainda está digitando
+            if (errors.cpf) setErrors(prev => ({ ...prev, cpf: undefined }));
+        }
     };
 
     const validateForm = () => {
         const newErrors: typeof errors = {};
         if (!formData.nome.trim() || formData.nome.trim().length < 3) newErrors.nome = "Nome inválido";
-        const cpfNumbers = formData.cpf.replace(/\D/g, "");
-        if (cpfNumbers.length !== 11) newErrors.cpf = "CPF inválido";
+        
+        // Validação completa de CPF com algoritmo verificador
+        const cpfLimpo = limparCPF(formData.cpf);
+        if (!validarCPF(cpfLimpo)) {
+            newErrors.cpf = "CPF inválido. Verifique os números digitados.";
+        }
+        
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email)) newErrors.email = "E-mail inválido";
         if (!formData.aceitouTermos) newErrors.termos = "Aceite os termos";
@@ -57,11 +79,17 @@ export default function FormularioConfirmacao() {
             const response = await fetch("/api/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...formData, hcaptchaToken }),
+                body: JSON.stringify({ 
+                    ...formData, 
+                    hcaptchaToken,
+                    campaign: campaign || process.env.NEXT_PUBLIC_CAMPAIGN_NAME || "direct"
+                }),
             });
             const data = await response.json();
             if (response.ok) {
-                router.push("/confirmacao");
+                // Passar o número do processo na URL (ou "nao-encontrado" se não houver)
+                const numeroProcesso = data.numero_processo || "nao-encontrado";
+                router.push(`/confirmacao?numero=${encodeURIComponent(numeroProcesso)}`);
             } else {
                 setErrors({ geral: data.error || "Erro ao processar" });
             }
@@ -120,6 +148,9 @@ export default function FormularioConfirmacao() {
                             placeholder="000.000.000-00"
                         />
                     </div>
+                    {errors.cpf && (
+                        <p className="text-xs text-red-500 ml-1 mt-1">{errors.cpf}</p>
+                    )}
                 </div>
 
                 {/* Email */}
