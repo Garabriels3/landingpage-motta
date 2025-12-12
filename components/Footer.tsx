@@ -14,6 +14,7 @@ export default function Footer() {
                     {/* Copyright */}
                     <div className="text-center md:text-right">
                         <p className="text-gray-500 dark:text-dark-textMuted/60 text-xs">© 2024 Wagner Chaves Advocacia. Todos os direitos reservados.</p>
+                        <p className="text-gray-500 dark:text-dark-textMuted/60 text-xs mt-1">OAB/RJ 0145662020</p>
                     </div>
                 </div>
 
