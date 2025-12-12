@@ -122,7 +122,7 @@ function ConfirmacaoContent() {
 
                             <div className="bg-background dark:bg-dark-bgAlt border-2 border-primary/30 dark:border-dark-border rounded-xl p-8 shadow-inner">
                                 <a
-                                    href="https://www3.tjrj.jus.br/consultaprocessual/#/consultapublica"
+                                    href="https://www.tjrj.jus.br/"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-2xl md:text-3xl font-mono font-bold text-primary text-center tracking-wide select-all block hover:text-primary-light transition-colors cursor-pointer hover:underline"
@@ -211,7 +211,7 @@ function ConfirmacaoContent() {
                                         chaveTexto: "confirmacao.consulta.passo2.texto",
                                         title: "Acesse o portal de consultas",
                                         desc: "Acesse o portal do Tribunal de Justiça do RJ.",
-                                        link: "https://www3.tjrj.jus.br/consultaprocessual/#/consultapublica"
+                                        link: "https://www.tjrj.jus.br/"
                                     },
                                     {
                                         num: 3,
