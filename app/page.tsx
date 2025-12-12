@@ -1,6 +1,15 @@
+import { Suspense } from "react";
 import Header from "@/components/Header";
 import FormularioConfirmacao from "@/components/FormularioConfirmacao";
 import Footer from "@/components/Footer";
+
+function FormLoading() {
+    return (
+        <div className="bg-surface-dark border border-surface-border rounded-3xl p-6 md:p-8 shadow-2xl flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+    );
+}
 
 export default function Home() {
     return (
@@ -87,7 +96,9 @@ export default function Home() {
 
                     {/* Right Side - Form */}
                     <div className="lg:col-span-5 animate-slide-up">
-                        <FormularioConfirmacao />
+                        <Suspense fallback={<FormLoading />}>
+                            <FormularioConfirmacao />
+                        </Suspense>
                     </div>
                 </div>
             </main>
