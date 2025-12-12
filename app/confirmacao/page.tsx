@@ -57,8 +57,8 @@ function ConfirmacaoContent() {
         <main className="min-h-screen flex flex-col bg-background selection:bg-primary/30 selection:text-primary-darker">
             {/* Background Effects */}
             <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-                <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]"></div>
-                <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-surface-dark/40 rounded-full blur-[100px]"></div>
+                <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary/10 dark:bg-primary/5 rounded-full blur-[120px]"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-primary/5 dark:bg-dark-surface/40 rounded-full blur-[100px]"></div>
             </div>
 
             <Header />
@@ -67,17 +67,17 @@ function ConfirmacaoContent() {
                 <div className="max-w-2xl w-full space-y-8 animate-fade-in">
                     {/* Ícone de sucesso */}
                     <div className="flex justify-center">
-                        <div className="w-20 h-20 rounded-full bg-surface-dark flex items-center justify-center border-4 border-primary/20 shadow-lg animate-pulse-slow">
+                        <div className="w-20 h-20 rounded-full bg-white dark:bg-dark-surface flex items-center justify-center border-4 border-primary/30 dark:border-primary/20 shadow-lg animate-pulse-slow">
                             <span className="material-symbols-outlined text-primary text-4xl">check_circle</span>
                         </div>
                     </div>
 
                     {/* Título */}
                     <div className="text-center space-y-3">
-                        <h1 className="text-3xl md:text-4xl font-bold text-text-main">
+                        <h1 className="text-3xl md:text-4xl font-bold text-text-main dark:text-dark-textMain">
                             Interesse Confirmado
                         </h1>
-                        <p className="text-text-secondary max-w-lg mx-auto leading-relaxed">
+                        <p className="text-text-muted dark:text-dark-textSecondary max-w-lg mx-auto leading-relaxed">
                             {encontrado
                                 ? "Recebemos sua solicitação. Identificamos um processo jurídico em seu nome com status ativo. Confira os dados oficiais abaixo."
                                 : "Recebemos sua solicitação. Não encontramos um processo ativo no momento, mas nossa equipe pode analisar outras oportunidades."}

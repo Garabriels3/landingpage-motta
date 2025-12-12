@@ -115,30 +115,30 @@ export default function FormularioConfirmacao() {
     };
 
     return (
-        <div className="bg-surface-dark border border-surface-border rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden group">
+        <div className="bg-white dark:bg-dark-paper border-2 border-primary/30 dark:border-dark-border rounded-3xl p-6 md:p-8 shadow-card dark:shadow-card-dark relative overflow-hidden group">
             {/* Linha gradiente no topo */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-60"></div>
 
             <div className="mb-8">
-                <h3 className="text-2xl font-bold text-text-main mb-2">Confirmação de Interesse</h3>
-                <p className="text-text-secondary text-sm">Preencha o formulário abaixo para validar seu direito.</p>
+                <h3 className="text-2xl font-bold text-text-main dark:text-dark-textMain mb-2">Confirmação de Interesse</h3>
+                <p className="text-text-muted dark:text-dark-textSecondary text-sm">Preencha o formulário abaixo para validar seu direito.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                 {/* Nome */}
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-text-main ml-1">Nome Completo</label>
+                    <label className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1">Nome Completo</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span className="material-symbols-outlined text-text-muted/50">person</span>
+                            <span className="material-symbols-outlined text-primary-dark dark:text-dark-textMuted">person</span>
                         </div>
                         <input
                             type="text"
                             name="nome"
                             value={formData.nome}
                             onChange={handleChange}
-                            className={`w-full h-14 pl-12 pr-4 bg-background-alt border rounded-xl text-text-main placeholder:text-text-muted/30 focus:ring-1 focus:outline-none transition-all
-                                ${errors.nome ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-surface-border focus:border-primary focus:ring-primary"}`}
+                            className={`w-full h-14 pl-12 pr-4 bg-background-alt dark:bg-dark-bgAlt border-2 rounded-xl text-text-main dark:text-dark-textMain placeholder:text-text-muted/50 dark:placeholder:text-dark-textMuted/50 focus:ring-2 focus:outline-none transition-all
+                                ${errors.nome ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : "border-primary/30 dark:border-dark-border focus:border-primary focus:ring-primary/20"}`}
                             placeholder="Digite seu nome completo"
                         />
                     </div>
@@ -149,10 +149,10 @@ export default function FormularioConfirmacao() {
 
                 {/* CPF */}
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-text-main ml-1">CPF</label>
+                    <label className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1">CPF</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span className="material-symbols-outlined text-text-muted/50">id_card</span>
+                            <span className="material-symbols-outlined text-primary-dark dark:text-dark-textMuted">id_card</span>
                         </div>
                         <input
                             type="text"
@@ -160,8 +160,8 @@ export default function FormularioConfirmacao() {
                             value={formData.cpf}
                             onChange={handleCpfChange}
                             maxLength={14}
-                            className={`w-full h-14 pl-12 pr-4 bg-background-alt border rounded-xl text-text-main placeholder:text-text-muted/30 focus:ring-1 focus:outline-none transition-all
-                                ${errors.cpf ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-surface-border focus:border-primary focus:ring-primary"}`}
+                            className={`w-full h-14 pl-12 pr-4 bg-background-alt dark:bg-dark-bgAlt border-2 rounded-xl text-text-main dark:text-dark-textMain placeholder:text-text-muted/50 dark:placeholder:text-dark-textMuted/50 focus:ring-2 focus:outline-none transition-all
+                                ${errors.cpf ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : "border-primary/30 dark:border-dark-border focus:border-primary focus:ring-primary/20"}`}
                             placeholder="000.000.000-00"
                         />
                     </div>
@@ -172,18 +172,18 @@ export default function FormularioConfirmacao() {
 
                 {/* Email */}
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-text-main ml-1">E-mail para contato</label>
+                    <label className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1">E-mail para contato</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span className="material-symbols-outlined text-text-muted/50">mail</span>
+                            <span className="material-symbols-outlined text-primary-dark dark:text-dark-textMuted">mail</span>
                         </div>
                         <input
                             type="email"
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            className={`w-full h-14 pl-12 pr-4 bg-background-alt border rounded-xl text-text-main placeholder:text-text-muted/30 focus:ring-1 focus:outline-none transition-all
-                                ${errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-surface-border focus:border-primary focus:ring-primary"}`}
+                            className={`w-full h-14 pl-12 pr-4 bg-background-alt dark:bg-dark-bgAlt border-2 rounded-xl text-text-main dark:text-dark-textMain placeholder:text-text-muted/50 dark:placeholder:text-dark-textMuted/50 focus:ring-2 focus:outline-none transition-all
+                                ${errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : "border-primary/30 dark:border-dark-border focus:border-primary focus:ring-primary/20"}`}
                             placeholder="seu@email.com"
                         />
                     </div>
@@ -208,11 +208,11 @@ export default function FormularioConfirmacao() {
                             type="checkbox"
                             checked={formData.aceitouTermos}
                             onChange={handleChange}
-                            className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-surface-border bg-background-alt checked:border-primary checked:bg-primary transition-all"
+                            className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-primary/30 dark:border-dark-border bg-background-alt dark:bg-dark-bgAlt checked:border-primary checked:bg-primary transition-all"
                         />
-                        <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[16px] text-background opacity-0 peer-checked:opacity-100 transition-opacity font-bold">check</span>
+                        <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[16px] text-white dark:text-dark-bg opacity-0 peer-checked:opacity-100 transition-opacity font-bold">check</span>
                     </div>
-                    <span className="text-xs text-text-secondary leading-normal pt-0.5">
+                    <span className="text-xs text-text-muted dark:text-dark-textSecondary leading-normal pt-0.5">
                         Declaro que li e aceito os <a href="#" className="text-primary hover:underline font-medium">Termos de Uso</a> e a <a href="#" className="text-primary hover:underline font-medium">Política de Privacidade</a>.
                     </span>
                 </label>
@@ -225,8 +225,8 @@ export default function FormularioConfirmacao() {
                     disabled={isSubmitting || !isFormValid()}
                     className={`mt-4 w-full h-14 text-base font-bold rounded-full transition-all transform active:scale-[0.98] flex items-center justify-center gap-2
                         ${isSubmitting || !isFormValid()
-                            ? "bg-gray-600 cursor-not-allowed text-gray-400"
-                            : "bg-primary hover:bg-primary-light text-background shadow-glow hover:shadow-glow-lg"}`}
+                            ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed text-gray-600 dark:text-gray-400"
+                            : "bg-primary hover:bg-primary-dark text-white shadow-glow hover:shadow-glow-lg"}`}
                 >
                     {isSubmitting ? "Processando..." : (
                         <>
@@ -237,10 +237,10 @@ export default function FormularioConfirmacao() {
                 </button>
 
                 <div className="text-center mt-2">
-                    <p className="text-[10px] text-text-secondary/50 uppercase tracking-widest">Conexão Segura 256-bit SSL</p>
+                    <p className="text-[10px] text-text-muted/60 dark:text-dark-textMuted/50 uppercase tracking-widest">Conexão Segura 256-bit SSL</p>
                 </div>
 
-                {errors.geral && <div className="text-center text-red-500 text-sm font-bold bg-red-900/20 p-2 rounded border border-red-500/30">{errors.geral}</div>}
+                {errors.geral && <div className="text-center text-red-500 text-sm font-bold bg-red-100 dark:bg-red-900/20 p-2 rounded border border-red-300 dark:border-red-500/30">{errors.geral}</div>}
             </form>
         </div>
     );

@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+    darkMode: 'class', // Habilitar dark mode via classe
     content: [
         "./pages/**/*.{js,ts,jsx,tsx,mdx}",
         "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,49 +10,68 @@ const config: Config = {
     theme: {
         extend: {
             colors: {
-                // Cores Principais (Dourado)
+                // Cores Principais (Dourado) - Mantidas em ambos os modos
                 primary: {
                     DEFAULT: "#D2AC6E", // Dourado principal
                     dark: "#B8935A",    // Dourado médio/escuro
                     darker: "#8B6F47",  // Dourado mais escuro
                     light: "#E8C88A",   // Dourado claro
                 },
-                // Cores de Fundo - DARK THEME (Inspirado na referência)
+
+                // ============================================
+                // LIGHT MODE (padrão)
+                // ============================================
                 background: {
-                    DEFAULT: "#1A1612", // Fundo escuro marrom
-                    light: "#F5F1E8",   // Fundo claro (alternativo)
-                    alt: "#241E18",     // Fundo alternativo (inputs)
-                    paper: "#2A231C",   // Cards
+                    DEFAULT: "#F5F1E8", // Bege quente
+                    alt: "#FFFFFF",     // Branco (inputs)
+                    paper: "#FFFFFF",   // Branco (cards)
                 },
-                // Cores de Superfície
                 surface: {
-                    dark: "#2A231C",    // Superfície escura
-                    border: "#3D3429",  // Borda de superfície
+                    dark: "#F0EBE1",    // Bege mais escuro
+                    border: "#D2AC6E",  // Borda dourada (destaque)
                 },
-                // Cores de Texto - DARK THEME
                 text: {
-                    main: "#FFFFFF",    // Branco (títulos)
-                    body: "#E8DED0",    // Bege claro (corpo)
-                    muted: "#A89A85",   // Bege médio (placeholders)
-                    secondary: "#C4B59A", // Secundário
-                    accent: "#D2AC6E",  // Dourado para destaques
+                    main: "#1A1A1A",    // Preto suave
+                    body: "#333333",    // Cinza escuro
+                    muted: "#666666",   // Cinza médio
+                    secondary: "#555555", // Secundário
+                    accent: "#8B6F47",  // Dourado escuro
                 },
-                // Cores de Input e Formulário
                 input: {
-                    border: "#D2AC6E",      // Borda dourada para inputs
-                    borderHover: "#B8935A", // Borda dourada hover
-                    borderFocus: "#E8C88A", // Borda dourada focus (mais clara)
+                    border: "#D2AC6E",      // Borda dourada
+                    borderHover: "#B8935A", // Hover
+                    borderFocus: "#8B6F47", // Focus
                 },
-                // Cores do Botão
+
+                // ============================================
+                // DARK MODE (via classes dark:)
+                // Cores específicas para dark mode
+                // ============================================
+                dark: {
+                    bg: "#1A1612",           // Fundo escuro
+                    bgAlt: "#241E18",        // Inputs
+                    paper: "#2A231C",        // Cards
+                    surface: "#2A231C",      // Superfície
+                    border: "#3D3429",       // Bordas
+                    textMain: "#FFFFFF",     // Texto principal
+                    textBody: "#E8DED0",     // Corpo
+                    textMuted: "#A89A85",    // Muted
+                    textSecondary: "#C4B59A", // Secundário
+                },
+
+                // Cores do Botão (iguais em ambos)
                 button: {
-                    bg: "#D2AC6E",          // Fundo do botão (dourado)
-                    bgHover: "#E8C88A",     // Hover do botão (mais claro)
-                    text: "#1A1612",        // Texto do botão (escuro)
+                    bg: "#D2AC6E",
+                    bgHover: "#B8935A",
+                    textLight: "#1A1612",  // Texto escuro para light mode
+                    textDark: "#1A1612",   // Texto escuro para dark mode também (botão dourado)
                 },
+
                 // Cores do Box/Card do Formulário
                 formBox: {
-                    border: "#3D3429",      // Borda do box
-                    bg: "#2A231C",          // Fundo do box
+                    border: "#D2AC6E",      // Borda dourada em ambos
+                    bgLight: "#FFFFFF",     // Fundo light
+                    bgDark: "#2A231C",      // Fundo dark
                 },
             },
             fontFamily: {
@@ -87,8 +107,9 @@ const config: Config = {
             boxShadow: {
                 "glow": "0 0 20px rgba(210, 172, 110, 0.3)",
                 "glow-lg": "0 0 30px rgba(210, 172, 110, 0.4)",
-                "card": "0 4px 20px -2px rgba(0, 0, 0, 0.3)",
-                "input": "0 2px 4px 0 rgba(0, 0, 0, 0.2)",
+                "card": "0 4px 20px -2px rgba(0, 0, 0, 0.1)",
+                "card-dark": "0 4px 20px -2px rgba(0, 0, 0, 0.3)",
+                "input": "0 2px 4px 0 rgba(0, 0, 0, 0.05)",
             }
         },
     },
