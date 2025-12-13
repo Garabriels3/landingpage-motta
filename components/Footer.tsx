@@ -10,13 +10,33 @@ export default function Footer() {
                         href="https://wagnerchaves.adv.br/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 hover:opacity-80 transition-all duration-500"
+                        className="flex items-center gap-4 hover:opacity-80 transition-opacity group"
                     >
-                        <img
-                            src="https://wagnerchaves.adv.br/wp-content/uploads/2023/03/logo.png"
-                            alt="Wagner Chaves Advocacia"
-                            className="h-10 w-auto object-contain dark:invert dark:hue-rotate-180 dark:brightness-150 dark:contrast-125 filter transition-all duration-300"
-                        />
+                        {/* Logos Container */}
+                        <div className="relative">
+                            {/* Logo Light Mode */}
+                            <img
+                                src="https://wagnerchaves.adv.br/wp-content/uploads/2023/03/logo.png"
+                                alt="Wagner Chaves Advocacia"
+                                className="h-10 w-auto object-contain block dark:hidden"
+                            />
+                            {/* Logo Dark Mode */}
+                            <img
+                                src="/assets/logo-dark.png"
+                                alt="Wagner Chaves Advocacia"
+                                className="h-10 w-auto object-contain hidden dark:block"
+                            />
+                        </div>
+
+                        {/* Text Container */}
+                        <div className="flex flex-col text-left">
+                            <span className="text-gray-800 dark:text-[#f0c168] text-base font-bold leading-none tracking-tight">
+                                Wagner Chaves
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400 text-[10px] font-medium uppercase tracking-widest mt-0.5">
+                                Advogados Associados
+                            </span>
+                        </div>
                     </a>
 
                     {/* Social Media Links */}
@@ -58,7 +78,7 @@ export default function Footer() {
 
                     {/* Copyright */}
                     <div className="text-center md:text-right">
-                        <p className="text-gray-500 dark:text-dark-textMuted/60 text-xs">© 2024 Wagner Chaves Advocacia. Todos os direitos reservados.</p>
+                        <p className="text-gray-500 dark:text-dark-textMuted/60 text-xs">© 2025 Wagner Chaves Advocacia. Todos os direitos reservados.</p>
                         <p className="text-gray-500 dark:text-dark-textMuted/60 text-xs mt-1">OAB/RJ 0145662020</p>
                     </div>
                 </div>

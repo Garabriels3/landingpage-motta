@@ -7,18 +7,37 @@ export default function Header() {
     return (
         <header className="w-full glass-effect sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                {/* Logo e Nome */}
                 <a
                     href="https://wagnerchaves.adv.br/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block hover:opacity-80 transition-opacity"
+                    className="flex items-center gap-4 hover:opacity-80 transition-opacity group"
                 >
-                    <img
-                        src="https://wagnerchaves.adv.br/wp-content/uploads/2023/03/logo.png"
-                        alt="Wagner Chaves Advocacia"
-                        className="h-10 md:h-12 w-auto object-contain dark:invert dark:hue-rotate-180 dark:brightness-150 dark:contrast-125 filter transition-all duration-300"
-                    />
+                    {/* Logos Container */}
+                    <div className="relative">
+                        {/* Logo Light Mode */}
+                        <img
+                            src="https://wagnerchaves.adv.br/wp-content/uploads/2023/03/logo.png"
+                            alt="Wagner Chaves Advocacia"
+                            className="h-10 md:h-12 w-auto object-contain block dark:hidden"
+                        />
+                        {/* Logo Dark Mode */}
+                        <img
+                            src="/assets/logo-dark.png"
+                            alt="Wagner Chaves Advocacia"
+                            className="h-10 md:h-12 w-auto object-contain hidden dark:block"
+                        />
+                    </div>
+
+                    {/* Text Container */}
+                    <div className="flex flex-col">
+                        <span className="text-gray-800 dark:text-[#f0c168] text-lg font-bold leading-none tracking-tight">
+                            Wagner Chaves
+                        </span>
+                        <span className="text-gray-500 dark:text-gray-400 text-[10px] md:text-xs font-medium uppercase tracking-widest mt-0.5">
+                            Advogados Associados
+                        </span>
+                    </div>
                 </a>
 
                 {/* Right Side - Badge + Theme Toggle */}
