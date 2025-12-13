@@ -274,8 +274,8 @@ export default function AdminConteudosPage() {
     // FUNÇÕES DE VIEW
     // ============================================
 
-    // Agrupa conteúdos por página
-    const conteudosPorPagina = conteudos.reduce((acc, curr) => {
+    // Agrupa conteúdos por página (com proteção caso não seja array)
+    const conteudosPorPagina = (Array.isArray(conteudos) ? conteudos : []).reduce((acc, curr) => {
         if (!acc[curr.pagina]) acc[curr.pagina] = [];
         acc[curr.pagina].push(curr);
         return acc;
