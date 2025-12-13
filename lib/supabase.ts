@@ -364,34 +364,86 @@ export async function listarCasosAdmin(
 
         // Filtro de Advogado
         if (filtroAdvogado === 'com_advogado') {
-            // Considera com advogado se o campo não for nulo e não for vazio
             query = query.neq('ADVOGADO', null).neq('ADVOGADO', '');
         } else if (filtroAdvogado === 'sem_advogado') {
-            // Considera sem advogado se for nulo ou vazio
-            // Nota: Supabase OR syntax para null ou empty string é chato, vamos simplificar
-            // verificando se é null. Se o banco tiver strings vazias, isso pode precisar de ajuste.
-            // Tentativa de cobrir ambos: is null or eq ''
             query = query.or('ADVOGADO.is.null,ADVOGADO.eq.""');
         }
 
-        // Filtro de Data
-        if (dataInicio) {
-            query = query.gte('DATA_DISTRIBUICAO', dataInicio);
+        // Se houver filtro de data, precisamos buscar tudo e filtrar em memória
+        // pois o formato no banco pode ser DD/MM/YYYY (texto) que não aceita range query direto
+        const isDateFilterActive = dataInicio || dataFim;
+
+        let data: Caso[] = [];
+        let count = 0;
+
+        if (isDateFilterActive) {
+            // Busca tudo (sem range) para filtrar em memória
+            // AVISO: Isso pode ser pesado se houverem milhares de registros. 
+            // Ideal seria corrigir o tipo da coluna no banco para DATE.
+            // Ideal seria corrigir o tipo da coluna no banco para DATE.
+            const response = await query.order("id", { ascending: true }).limit(5000);
+            if (response.error) throw response.error;
+
+            let todosCasos = response.data || [];
+
+            // Helper para converter "DD/MM/YYYY" ou "YYYY-MM-DD" para Date object
+            const parseDate = (dateStr: string): Date | null => {
+                if (!dateStr) return null;
+                // Tenta formato ISO YYYY-MM-DD
+                if (dateStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+                    return new Date(dateStr);
+                }
+                // Tenta formato BR DD/MM/YYYY
+                if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}/)) {
+                    const [dia, mes, ano] = dateStr.split('/');
+                    return new Date(`${ano}-${mes}-${dia}`);
+                }
+                return new Date(dateStr); // Tenta parse nativo
+            };
+
+            // Aplica filtro de data em memória
+            if (dataInicio) {
+                const start = new Date(dataInicio);
+                start.setHours(0, 0, 0, 0);
+                todosCasos = todosCasos.filter(c => {
+                    const d = parseDate(c.DATA_DISTRIBUICAO);
+                    return d && d >= start;
+                });
+            }
+
+            if (dataFim) {
+                const end = new Date(dataFim);
+                end.setHours(23, 59, 59, 999);
+                todosCasos = todosCasos.filter(c => {
+                    const d = parseDate(c.DATA_DISTRIBUICAO);
+                    return d && d <= end;
+                });
+            }
+
+            count = todosCasos.length;
+
+            // Paginação em memória
+            const from = page * limit;
+            const to = from + limit;
+            data = todosCasos.slice(from, to);
+
+        } else {
+            // Sem filtro de data, usa paginação do banco (mais performático)
+            const from = page * limit;
+            const to = from + limit - 1;
+
+            const response = await query
+                .range(from, to)
+                .order("id", { ascending: true });
+
+            if (response.error) throw response.error;
+
+            data = response.data || [];
+            count = response.count || 0;
         }
-        if (dataFim) {
-            query = query.lte('DATA_DISTRIBUICAO', dataFim);
-        }
 
-        const from = page * limit;
-        const to = from + limit - 1;
+        return { data, count };
 
-        const { data, count, error } = await query
-            .range(from, to)
-            .order("id", { ascending: true });
-
-        if (error) throw error;
-
-        return { data: data || [], count: count || 0 };
     } catch (error) {
         console.error("Erro ao listar casos admin:", error);
         return { data: [], count: 0 };
