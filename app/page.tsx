@@ -43,7 +43,7 @@ export default function Home() {
                             </div>
 
                             {/* Headline */}
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight text-text-main dark:text-dark-textMain">
+                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight text-primary-darker dark:text-primary animate-pulse-slow">
                                 <ConteudoText
                                     chave="homepage.headline"
                                     fallback="Identificamos um direito a seu favor."
