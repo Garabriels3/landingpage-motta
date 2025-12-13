@@ -100,6 +100,11 @@ export async function GET(request: NextRequest) {
             page,
             limit,
             totalPages: Math.ceil((total || 0) / limit),
+        }, {
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
         });
     } catch (error) {
         console.error("Erro interno:", error);

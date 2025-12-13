@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
         const token = authHeader.split(" ")[1];
         // Validação simples de senha env (mesma do resto do admin)
-        if (token !== process.env.ADMIN_PASSWORD) {
+        if (token !== process.env.ADMIN_SECRET_KEY) {
             return NextResponse.json({ error: "Invalid token" }, { status: 401 });
         }
 
@@ -29,6 +29,11 @@ export async function GET(request: NextRequest) {
             total: result.count,
             page,
             limit
+        }, {
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
         });
 
     } catch (error) {

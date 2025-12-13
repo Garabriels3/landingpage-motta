@@ -158,8 +158,8 @@ export default function AdminConteudosPage() {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                setConteudos(data);
+                const result = await response.json();
+                setConteudos(result.data || []);
                 // Limpa alterações pendentes ao recarregar
                 setAlteracoesPendentes({});
             }
