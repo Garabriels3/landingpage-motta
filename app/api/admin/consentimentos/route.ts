@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Forçar renderização dinâmica
+// Forçar renderização dinâmica e ZERO cache
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 /**
  * Verificar autenticação admin
@@ -44,7 +45,7 @@ function getSupabaseClient() {
 }
 
 /**
- * GET - Listar consentimentos
+ * GET - Listar consentimentos (SEMPRE DADOS FRESCOS)
  */
 export async function GET(request: NextRequest) {
     // Verificar autenticação
@@ -70,7 +71,9 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get("limit") || "50");
         const offset = (page - 1) * limit;
 
-        // Buscar total de registros
+        console.log(`[CONSENTIMENTOS] Buscando página ${page}, timestamp: ${Date.now()}`);
+
+        // Buscar total de registros (FRESH)
         const { count: total, error: countError } = await supabase
             .from("consentimentos")
             .select("*", { count: "exact", head: true });
@@ -79,7 +82,9 @@ export async function GET(request: NextRequest) {
             console.error("Erro ao contar consentimentos:", countError);
         }
 
-        // Buscar consentimentos com paginação
+        console.log(`[CONSENTIMENTOS] Total no banco: ${total}`);
+
+        // Buscar consentimentos com paginação (FRESH)
         const { data, error } = await supabase
             .from("consentimentos")
             .select("id, cpf, nome_fornecido, email_fornecido, aceitou_termos, ip, source_campaign, created_at")
@@ -94,16 +99,21 @@ export async function GET(request: NextRequest) {
             );
         }
 
+        console.log(`[CONSENTIMENTOS] Retornando ${data?.length || 0} registros`);
+
         return NextResponse.json({
             data: data || [],
             total: total || 0,
             page,
             limit,
             totalPages: Math.ceil((total || 0) / limit),
+            _timestamp: Date.now() // Força navegador a ver como resposta única
         }, {
             headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache'
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+                'Surrogate-Control': 'no-store'
             }
         });
     } catch (error) {
