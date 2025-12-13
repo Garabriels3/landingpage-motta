@@ -28,7 +28,28 @@ type Caso = {
     REU: string;
     DOC_REU: string;
     EMAIL: string;
+    TELEFONE?: string;
+    CELULAR?: string;
+    ENDERECO?: string;
+    CIDADE?: string;
+    ESTADO?: string;
+    CEP?: string;
+    DATA_NASCIMENTO?: string;
+    NOME_MAE?: string;
+    VALOR_CAUSA?: string;
+    VARA?: string;
+    COMARCA?: string;
+    TIPO_ACAO?: string;
+    STATUS_PROCESSO?: string;
+    DATA_DISTRIBUICAO?: string;
+    ADVOGADO?: string;
+    OAB?: string;
+    OBSERVACOES?: string;
     consentimento_id?: string;
+    status_consentimento?: boolean;
+    created_at?: string;
+    updated_at?: string;
+    [key: string]: any;
 };
 
 // Configuração das páginas para organizar a edição
@@ -656,8 +677,8 @@ export default function AdminConteudosPage() {
                                         {/* Card de Detalhes */}
                                         <div className={`transition-all duration-300 overflow-hidden ${casoSelecionado ? 'w-[45%] opacity-100' : 'w-0 opacity-0'}`}>
                                             {casoSelecionado && (
-                                                <div className="bg-[#2a261f] rounded-xl border border-white/5 p-6 h-fit sticky top-6">
-                                                    <div className="flex items-center justify-between mb-6">
+                                                <div className="bg-[#2a261f] rounded-xl border border-white/5 h-fit sticky top-6 max-h-[85vh] flex flex-col">
+                                                    <div className="flex items-center justify-between p-6 border-b border-white/5">
                                                         <h3 className="text-lg font-bold text-white">Detalhes do Caso</h3>
                                                         <button
                                                             onClick={() => setCasoSelecionado(null)}
@@ -667,26 +688,199 @@ export default function AdminConteudosPage() {
                                                         </button>
                                                     </div>
 
-                                                    <div className="space-y-4">
+                                                    <div className="overflow-y-auto p-6 space-y-6" style={{ scrollbarWidth: 'thin', scrollbarColor: '#332d25 #1e1a14' }}>
+                                                        {/* Dados Pessoais */}
                                                         <div>
-                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Nome / Réu</label>
-                                                            <p className="text-white font-medium mt-1">{casoSelecionado.REU}</p>
+                                                            <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+                                                                <span className="material-symbols-outlined text-[18px]">person</span>
+                                                                Dados Pessoais
+                                                            </h4>
+                                                            <div className="space-y-3">
+                                                                <div>
+                                                                    <label className="text-xs text-gray-500 uppercase tracking-wider">Nome / Réu</label>
+                                                                    <p className="text-white font-medium mt-1">{casoSelecionado.REU}</p>
+                                                                </div>
+                                                                {casoSelecionado.DOC_REU && (
+                                                                    <div>
+                                                                        <label className="text-xs text-gray-500 uppercase tracking-wider">CPF / Documento</label>
+                                                                        <p className="text-gray-300 font-mono mt-1">{casoSelecionado.DOC_REU}</p>
+                                                                    </div>
+                                                                )}
+                                                                {casoSelecionado.DATA_NASCIMENTO && (
+                                                                    <div>
+                                                                        <label className="text-xs text-gray-500 uppercase tracking-wider">Data de Nascimento</label>
+                                                                        <p className="text-gray-300 mt-1">{casoSelecionado.DATA_NASCIMENTO}</p>
+                                                                    </div>
+                                                                )}
+                                                                {casoSelecionado.NOME_MAE && (
+                                                                    <div>
+                                                                        <label className="text-xs text-gray-500 uppercase tracking-wider">Nome da Mãe</label>
+                                                                        <p className="text-gray-300 mt-1">{casoSelecionado.NOME_MAE}</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">CPF / Documento</label>
-                                                            <p className="text-gray-300 font-mono mt-1">{casoSelecionado.DOC_REU || "—"}</p>
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Email</label>
-                                                            <p className="text-gray-300 mt-1">{casoSelecionado.EMAIL || "—"}</p>
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Número do Processo</label>
-                                                            <p className="text-primary font-mono font-medium mt-1">{casoSelecionado.NUMERO_PROCESSO}</p>
-                                                        </div>
+
+                                                        {/* Contato */}
+                                                        {(casoSelecionado.EMAIL || casoSelecionado.TELEFONE || casoSelecionado.CELULAR) && (
+                                                            <div className="pt-4 border-t border-white/10">
+                                                                <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+                                                                    <span className="material-symbols-outlined text-[18px]">contact_phone</span>
+                                                                    Contato
+                                                                </h4>
+                                                                <div className="space-y-3">
+                                                                    {casoSelecionado.EMAIL && (
+                                                                        <div>
+                                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Email</label>
+                                                                            <p className="text-gray-300 mt-1">{casoSelecionado.EMAIL}</p>
+                                                                        </div>
+                                                                    )}
+                                                                    {casoSelecionado.TELEFONE && (
+                                                                        <div>
+                                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Telefone</label>
+                                                                            <p className="text-gray-300 mt-1">{casoSelecionado.TELEFONE}</p>
+                                                                        </div>
+                                                                    )}
+                                                                    {casoSelecionado.CELULAR && (
+                                                                        <div>
+                                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Celular</label>
+                                                                            <p className="text-gray-300 mt-1">{casoSelecionado.CELULAR}</p>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Endereço */}
+                                                        {(casoSelecionado.ENDERECO || casoSelecionado.CIDADE || casoSelecionado.ESTADO || casoSelecionado.CEP) && (
+                                                            <div className="pt-4 border-t border-white/10">
+                                                                <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+                                                                    <span className="material-symbols-outlined text-[18px]">location_on</span>
+                                                                    Endereço
+                                                                </h4>
+                                                                <div className="space-y-3">
+                                                                    {casoSelecionado.ENDERECO && (
+                                                                        <div>
+                                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Endereço</label>
+                                                                            <p className="text-gray-300 mt-1">{casoSelecionado.ENDERECO}</p>
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                        {casoSelecionado.CIDADE && (
+                                                                            <div>
+                                                                                <label className="text-xs text-gray-500 uppercase tracking-wider">Cidade</label>
+                                                                                <p className="text-gray-300 mt-1">{casoSelecionado.CIDADE}</p>
+                                                                            </div>
+                                                                        )}
+                                                                        {casoSelecionado.ESTADO && (
+                                                                            <div>
+                                                                                <label className="text-xs text-gray-500 uppercase tracking-wider">Estado</label>
+                                                                                <p className="text-gray-300 mt-1">{casoSelecionado.ESTADO}</p>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    {casoSelecionado.CEP && (
+                                                                        <div>
+                                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">CEP</label>
+                                                                            <p className="text-gray-300 mt-1">{casoSelecionado.CEP}</p>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Processo */}
                                                         <div className="pt-4 border-t border-white/10">
-                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Status do Consentimento</label>
-                                                            <div className="flex items-center gap-2 mt-2">
+                                                            <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+                                                                <span className="material-symbols-outlined text-[18px]">gavel</span>
+                                                                Informações do Processo
+                                                            </h4>
+                                                            <div className="space-y-3">
+                                                                <div>
+                                                                    <label className="text-xs text-gray-500 uppercase tracking-wider">Número do Processo</label>
+                                                                    <p className="text-primary font-mono font-medium mt-1">{casoSelecionado.NUMERO_PROCESSO}</p>
+                                                                </div>
+                                                                {casoSelecionado.TIPO_ACAO && (
+                                                                    <div>
+                                                                        <label className="text-xs text-gray-500 uppercase tracking-wider">Tipo de Ação</label>
+                                                                        <p className="text-gray-300 mt-1">{casoSelecionado.TIPO_ACAO}</p>
+                                                                    </div>
+                                                                )}
+                                                                {casoSelecionado.STATUS_PROCESSO && (
+                                                                    <div>
+                                                                        <label className="text-xs text-gray-500 uppercase tracking-wider">Status</label>
+                                                                        <p className="text-gray-300 mt-1">{casoSelecionado.STATUS_PROCESSO}</p>
+                                                                    </div>
+                                                                )}
+                                                                {casoSelecionado.DATA_DISTRIBUICAO && (
+                                                                    <div>
+                                                                        <label className="text-xs text-gray-500 uppercase tracking-wider">Data Distribuição</label>
+                                                                        <p className="text-gray-300 mt-1">{casoSelecionado.DATA_DISTRIBUICAO}</p>
+                                                                    </div>
+                                                                )}
+                                                                {casoSelecionado.VALOR_CAUSA && (
+                                                                    <div>
+                                                                        <label className="text-xs text-gray-500 uppercase tracking-wider">Valor da Causa</label>
+                                                                        <p className="text-gray-300 mt-1">{casoSelecionado.VALOR_CAUSA}</p>
+                                                                    </div>
+                                                                )}
+                                                                {casoSelecionado.VARA && (
+                                                                    <div>
+                                                                        <label className="text-xs text-gray-500 uppercase tracking-wider">Vara</label>
+                                                                        <p className="text-gray-300 mt-1">{casoSelecionado.VARA}</p>
+                                                                    </div>
+                                                                )}
+                                                                {casoSelecionado.COMARCA && (
+                                                                    <div>
+                                                                        <label className="text-xs text-gray-500 uppercase tracking-wider">Comarca</label>
+                                                                        <p className="text-gray-300 mt-1">{casoSelecionado.COMARCA}</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Advogado */}
+                                                        {(casoSelecionado.ADVOGADO || casoSelecionado.OAB) && (
+                                                            <div className="pt-4 border-t border-white/10">
+                                                                <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+                                                                    <span className="material-symbols-outlined text-[18px]">account_balance</span>
+                                                                    Advogado
+                                                                </h4>
+                                                                <div className="space-y-3">
+                                                                    {casoSelecionado.ADVOGADO && (
+                                                                        <div>
+                                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Nome</label>
+                                                                            <p className="text-gray-300 mt-1">{casoSelecionado.ADVOGADO}</p>
+                                                                        </div>
+                                                                    )}
+                                                                    {casoSelecionado.OAB && (
+                                                                        <div>
+                                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">OAB</label>
+                                                                            <p className="text-gray-300 mt-1">{casoSelecionado.OAB}</p>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Observações */}
+                                                        {casoSelecionado.OBSERVACOES && (
+                                                            <div className="pt-4 border-t border-white/10">
+                                                                <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+                                                                    <span className="material-symbols-outlined text-[18px]">notes</span>
+                                                                    Observações
+                                                                </h4>
+                                                                <p className="text-gray-300 text-sm leading-relaxed">{casoSelecionado.OBSERVACOES}</p>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Consentimento */}
+                                                        <div className="pt-4 border-t border-white/10">
+                                                            <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+                                                                <span className="material-symbols-outlined text-[18px]">verified_user</span>
+                                                                Status do Consentimento
+                                                            </h4>
+                                                            <div className="flex items-center gap-2">
                                                                 {casoSelecionado.consentimento_id ? (
                                                                     <>
                                                                         <span className="material-symbols-outlined text-green-500">verified</span>
@@ -700,6 +894,27 @@ export default function AdminConteudosPage() {
                                                                 )}
                                                             </div>
                                                         </div>
+
+                                                        {/* Metadados (se existir) */}
+                                                        {(casoSelecionado.created_at || casoSelecionado.updated_at) && (
+                                                            <div className="pt-4 border-t border-white/10">
+                                                                <h4 className="text-sm font-bold text-gray-600 mb-3">Metadados</h4>
+                                                                <div className="space-y-2 text-xs">
+                                                                    {casoSelecionado.created_at && (
+                                                                        <div className="flex justify-between">
+                                                                            <span className="text-gray-500">Criado em:</span>
+                                                                            <span className="text-gray-400">{new Date(casoSelecionado.created_at).toLocaleString('pt-BR')}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {casoSelecionado.updated_at && (
+                                                                        <div className="flex justify-between">
+                                                                            <span className="text-gray-500">Atualizado em:</span>
+                                                                            <span className="text-gray-400">{new Date(casoSelecionado.updated_at).toLocaleString('pt-BR')}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}

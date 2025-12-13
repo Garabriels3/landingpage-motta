@@ -61,9 +61,28 @@ export interface Caso {
     REU: string;
     DOC_REU: string;
     EMAIL: string;
+    TELEFONE?: string;
+    CELULAR?: string;
+    ENDERECO?: string;
+    CIDADE?: string;
+    ESTADO?: string;
+    CEP?: string;
+    DATA_NASCIMENTO?: string;
+    NOME_MAE?: string;
+    VALOR_CAUSA?: string;
+    VARA?: string;
+    COMARCA?: string;
+    TIPO_ACAO?: string;
+    STATUS_PROCESSO?: string;
+    DATA_DISTRIBUICAO?: string;
+    ADVOGADO?: string;
+    OAB?: string;
+    OBSERVACOES?: string;
     consentimento_id?: string;
     status_consentimento?: boolean;
     created_at?: string;
+    updated_at?: string;
+    [key: string]: any; // Permite qualquer outra coluna
 }
 
 // ============================================
