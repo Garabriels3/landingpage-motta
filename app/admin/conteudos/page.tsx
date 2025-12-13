@@ -139,6 +139,9 @@ export default function AdminConteudosPage() {
     const [consentimentoSelecionado, setConsentimentoSelecionado] = useState<Consentimento | null>(null);
     const [paginaConsentimentos, setPaginaConsentimentos] = useState(0);
 
+    // Estado para controle do menu mobile
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
     // Estados - Casos
     const [casos, setCasos] = useState<Caso[]>([]);
     const [carregandoCasos, setCarregandoCasos] = useState(false);
@@ -528,27 +531,50 @@ export default function AdminConteudosPage() {
     // RENDER: PAINEL ADMIN MAIN
     // ============================================
     return (
-        <div className="flex h-screen w-full bg-[#1e1a14] text-white overflow-hidden">
+        <div className="flex h-screen w-full bg-[#1e1a14] text-white overflow-hidden relative">
+
+            {/* Mobile Menu Overlay */}
+            {mobileMenuOpen && (
+                <div
+                    className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
+                    onClick={() => setMobileMenuOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <aside className="w-72 bg-[#2a261f] border-r border-white/5 flex flex-col justify-between shrink-0 h-full">
+            <aside className={`
+                fixed inset-y-0 left-0 z-50 w-72 bg-[#2a261f] border-r border-white/5 flex flex-col justify-between shrink-0 h-full transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
+                md:relative md:translate-x-0
+                ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+            `}>
                 <div className="flex flex-col gap-6 p-6">
                     {/* Brand */}
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-md border border-white/10">
-                            <span className="text-black font-bold text-lg">W</span>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-md border border-white/10">
+                                <span className="text-black font-bold text-lg">W</span>
+                            </div>
+                            <div>
+                                <h1 className="text-white text-base font-semibold leading-tight tracking-tight">
+                                    Wagner Chaves
+                                </h1>
+                                <p className="text-primary text-xs font-medium">Painel Admin</p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="text-white text-base font-semibold leading-tight tracking-tight">
-                                Wagner Chaves
-                            </h1>
-                            <p className="text-primary text-xs font-medium">Painel Administrativo</p>
-                        </div>
+
+                        {/* Mobile Close Button */}
+                        <button
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                        >
+                            <span className="material-symbols-outlined">close</span>
+                        </button>
                     </div>
 
                     {/* Navigation */}
                     <nav className="flex flex-col gap-2">
                         <button
-                            onClick={() => setActiveTab("textos")}
+                            onClick={() => { setActiveTab("textos"); setMobileMenuOpen(false); }}
                             className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "textos"
                                 ? "bg-primary text-black shadow-lg shadow-primary/20"
                                 : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -558,7 +584,7 @@ export default function AdminConteudosPage() {
                             Gerenciar Textos
                         </button>
                         <button
-                            onClick={() => setActiveTab("casos")}
+                            onClick={() => { setActiveTab("casos"); setMobileMenuOpen(false); }}
                             className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "casos"
                                 ? "bg-primary text-black shadow-lg shadow-primary/20"
                                 : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -568,7 +594,7 @@ export default function AdminConteudosPage() {
                             Gestão de Casos
                         </button>
                         <button
-                            onClick={() => setActiveTab("cadastros")}
+                            onClick={() => { setActiveTab("cadastros"); setMobileMenuOpen(false); }}
                             className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "cadastros"
                                 ? "bg-primary text-black shadow-lg shadow-primary/20"
                                 : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -603,13 +629,21 @@ export default function AdminConteudosPage() {
                         <header className="w-full bg-[#1e1a14]/95 backdrop-blur-sm border-b border-white/5 z-10 sticky top-0">
                             <div className="max-w-6xl mx-auto px-6 py-6 w-full">
                                 <div className="flex flex-wrap items-center justify-between gap-4">
-                                    <div className="flex flex-col gap-1">
-                                        <h2 className="text-white text-3xl font-bold tracking-tight">
-                                            Gestão de Casos
-                                        </h2>
-                                        <p className="text-gray-400 text-sm">
-                                            Base de processos e status de consentimento dos clientes.
-                                        </p>
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={() => setMobileMenuOpen(true)}
+                                            className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-[#2a261f] border border-white/10 text-gray-400 hover:text-white"
+                                        >
+                                            <span className="material-symbols-outlined">menu</span>
+                                        </button>
+                                        <div className="flex flex-col gap-1">
+                                            <h2 className="text-white text-2xl md:text-3xl font-bold tracking-tight">
+                                                Gestão de Casos
+                                            </h2>
+                                            <p className="text-gray-400 text-sm hidden md:block">
+                                                Base de processos e status de consentimento dos clientes.
+                                            </p>
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <form onSubmit={handleBuscaCasos} className="relative">
@@ -654,9 +688,9 @@ export default function AdminConteudosPage() {
                                 ) : (
                                     <div className="flex gap-6">
                                         {/* Lista de casos */}
-                                        <div className={`transition-all duration-300 ${casoSelecionado ? 'w-[55%]' : 'w-full'}`}>
+                                        <div className={`transition-all duration-300 ${casoSelecionado ? 'hidden md:block md:w-[55%]' : 'w-full'}`}>
                                             <div className="bg-[#2a261f] rounded-xl border border-white/5 overflow-hidden">
-                                                <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-[#1e1a14] border-b border-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                                <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-[#1e1a14] border-b border-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider">
                                                     <div className="col-span-1 text-center">Status</div>
                                                     <div className="col-span-4">Réu / Nome</div>
                                                     <div className="col-span-4">Email</div>
@@ -672,22 +706,31 @@ export default function AdminConteudosPage() {
                                                             <div
                                                                 key={caso.id}
                                                                 onClick={() => setCasoSelecionado(isSelected ? null : caso)}
-                                                                className={`grid grid-cols-12 gap-4 px-6 py-4 cursor-pointer transition-all items-center ${isSelected ? 'bg-primary/10 border-l-4 border-primary' : 'hover:bg-white/5'}`}
+                                                                className={`flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 px-6 py-4 cursor-pointer transition-all md:items-center border-b border-white/5 md:border-b-0 ${isSelected ? 'bg-primary/10 border-l-4 border-primary' : 'hover:bg-white/5'}`}
                                                             >
-                                                                <div className="col-span-1 flex justify-center">
-                                                                    {temConsentimento ? (
-                                                                        <span className="material-symbols-outlined text-green-500" title="Consentimento Confirmado">check_circle</span>
-                                                                    ) : (
-                                                                        <span className="material-symbols-outlined text-gray-600" title="Aguardando Cadastro">pending</span>
-                                                                    )}
+                                                                {/* Mobile Header: Icon + Name */}
+                                                                <div className="flex items-center gap-3 md:contents">
+                                                                    <div className="flex-shrink-0 md:col-span-1 md:flex md:justify-center">
+                                                                        {temConsentimento ? (
+                                                                            <span className="material-symbols-outlined text-green-500" title="Consentimento Confirmado">check_circle</span>
+                                                                        ) : (
+                                                                            <span className="material-symbols-outlined text-gray-600" title="Aguardando Cadastro">pending</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex-1 md:col-span-4 min-w-0">
+                                                                        <div className="text-white font-medium truncate" title={caso.REU}>{caso.REU}</div>
+                                                                        {/* Mobile Only Extra Info */}
+                                                                        <div className="md:hidden text-xs text-primary font-mono mt-0.5">{caso.NUMERO_PROCESSO}</div>
+                                                                    </div>
                                                                 </div>
-                                                                <div className="col-span-4">
-                                                                    <div className="text-white font-medium truncate" title={caso.REU}>{caso.REU}</div>
+
+                                                                {/* Desktop Columns / Mobile Bottom Row */}
+                                                                <div className="md:col-span-4 pl-9 md:pl-0">
+                                                                    <div className="text-gray-400 text-sm truncate" title={caso.EMAIL}>{caso.EMAIL || (
+                                                                        <span className="text-gray-600 italic text-xs">Sem email</span>
+                                                                    )}</div>
                                                                 </div>
-                                                                <div className="col-span-4">
-                                                                    <div className="text-gray-400 text-sm truncate" title={caso.EMAIL}>{caso.EMAIL || "-"}</div>
-                                                                </div>
-                                                                <div className="col-span-3 text-right">
+                                                                <div className="hidden md:block md:col-span-3 text-right">
                                                                     <div className="text-primary font-mono text-sm truncate" title={caso.NUMERO_PROCESSO}>{caso.NUMERO_PROCESSO}</div>
                                                                 </div>
                                                             </div>
@@ -724,9 +767,9 @@ export default function AdminConteudosPage() {
                                         </div>
 
                                         {/* Card de Detalhes */}
-                                        <div className={`transition-all duration-300 overflow-hidden ${casoSelecionado ? 'w-[45%] opacity-100' : 'w-0 opacity-0'}`}>
+                                        <div className={`transition-all duration-300 ${casoSelecionado ? 'fixed inset-0 z-[60] bg-[#1e1a14] md:static md:w-[45%] md:bg-transparent md:z-auto opacity-100 flex flex-col' : 'w-0 opacity-0 hidden'}`}>
                                             {casoSelecionado && (
-                                                <div className="bg-[#2a261f] rounded-xl border border-white/5 h-fit sticky top-6 max-h-[85vh] flex flex-col">
+                                                <div className="bg-[#2a261f] border-b border-white/5 md:rounded-xl md:border md:border-white/5 h-full md:sticky md:top-6 md:h-fit md:max-h-[85vh] flex flex-col">
                                                     <div className="flex items-center justify-between p-6 border-b border-white/5">
                                                         <h3 className="text-lg font-bold text-white">Detalhes do Caso</h3>
                                                         <button
@@ -1137,13 +1180,21 @@ export default function AdminConteudosPage() {
                         <header className="w-full bg-[#1e1a14]/95 backdrop-blur-sm border-b border-white/5 z-10 sticky top-0">
                             <div className="max-w-5xl mx-auto px-6 py-6 w-full">
                                 <div className="flex flex-wrap items-center justify-between gap-4">
-                                    <div className="flex flex-col gap-1">
-                                        <h2 className="text-white text-3xl font-bold tracking-tight">
-                                            Gerenciar Textos
-                                        </h2>
-                                        <p className="text-gray-400 text-sm">
-                                            Edite os textos do site em tempo real. As alterações aparecem instantaneamente após salvar.
-                                        </p>
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={() => setMobileMenuOpen(true)}
+                                            className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-[#2a261f] border border-white/10 text-gray-400 hover:text-white"
+                                        >
+                                            <span className="material-symbols-outlined">menu</span>
+                                        </button>
+                                        <div className="flex flex-col gap-1">
+                                            <h2 className="text-white text-2xl md:text-3xl font-bold tracking-tight">
+                                                Gerenciar Textos
+                                            </h2>
+                                            <p className="text-gray-400 text-sm hidden md:block">
+                                                Edite os textos do site em tempo real. As alterações aparecem instantaneamente após salvar.
+                                            </p>
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         {temAlteracoesNaoSalvas && (
@@ -1306,13 +1357,21 @@ export default function AdminConteudosPage() {
                         <header className="w-full bg-[#1e1a14]/95 backdrop-blur-sm border-b border-white/5 z-10 sticky top-0">
                             <div className="max-w-5xl mx-auto px-6 py-6 w-full">
                                 <div className="flex flex-wrap items-center justify-between gap-4">
-                                    <div className="flex flex-col gap-1">
-                                        <h2 className="text-white text-3xl font-bold tracking-tight">
-                                            Cadastros Recebidos
-                                        </h2>
-                                        <p className="text-gray-400 text-sm">
-                                            Pessoas que confirmaram interesse e consentiram com os termos.
-                                        </p>
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={() => setMobileMenuOpen(true)}
+                                            className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-[#2a261f] border border-white/10 text-gray-400 hover:text-white"
+                                        >
+                                            <span className="material-symbols-outlined">menu</span>
+                                        </button>
+                                        <div className="flex flex-col gap-1">
+                                            <h2 className="text-white text-2xl md:text-3xl font-bold tracking-tight">
+                                                Cadastros Recebidos
+                                            </h2>
+                                            <p className="text-gray-400 text-sm hidden md:block">
+                                                Pessoas que confirmaram interesse e consentiram com os termos.
+                                            </p>
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <div className="bg-[#2a261f] border border-white/10 rounded-lg px-4 py-2">
@@ -1350,7 +1409,7 @@ export default function AdminConteudosPage() {
                                 ) : (
                                     <div className="bg-[#2a261f] rounded-xl border border-white/5 overflow-hidden">
                                         {/* Table Header */}
-                                        <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-[#1e1a14] border-b border-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                        <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-[#1e1a14] border-b border-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider">
                                             <div className="col-span-3">Nome</div>
                                             <div className="col-span-2">CPF</div>
                                             <div className="col-span-3">Email</div>
@@ -1363,42 +1422,59 @@ export default function AdminConteudosPage() {
                                             {consentimentos.map((c) => (
                                                 <div
                                                     key={c.id}
-                                                    className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-white/5 transition-colors"
+                                                    className="flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 px-6 py-4 hover:bg-white/5 transition-colors border-b border-white/5 md:border-b-0"
                                                 >
-                                                    <div className="col-span-3 flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                                                    {/* Mobile Top Row: Name + Campaign + Date */}
+                                                    <div className="md:col-span-3 flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                                                             <span className="text-primary text-sm font-bold">
                                                                 {c.nome_fornecido?.charAt(0)?.toUpperCase() || "?"}
                                                             </span>
                                                         </div>
-                                                        <span className="text-white font-medium truncate">
-                                                            {c.nome_fornecido || "—"}
-                                                        </span>
+                                                        <div className="flex flex-col min-w-0 md:block">
+                                                            <span className="text-white font-medium truncate">
+                                                                {c.nome_fornecido || "—"}
+                                                            </span>
+                                                            {/* Mobile Subtitle */}
+                                                            <div className="md:hidden flex items-center gap-2 mt-0.5">
+                                                                <span className="text-xs text-primary/80">
+                                                                    {c.source_campaign || "direct"}
+                                                                </span>
+                                                                <span className="text-[10px] text-white/20">•</span>
+                                                                <span className="text-xs text-gray-500">
+                                                                    {new Date(c.created_at).toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit' })}
+                                                                </span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div className="col-span-2 flex items-center">
-                                                        <span className="text-gray-400 font-mono text-sm">
-                                                            {mascararCPF(c.cpf)}
-                                                        </span>
-                                                    </div>
-                                                    <div className="col-span-3 flex items-center">
-                                                        <span className="text-gray-400 text-sm truncate">
-                                                            {c.email_fornecido || "—"}
-                                                        </span>
-                                                    </div>
-                                                    <div className="col-span-2 flex items-center">
-                                                        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                                            {c.source_campaign || "direct"}
-                                                        </span>
-                                                    </div>
-                                                    <div className="col-span-2 flex items-center">
-                                                        <span className="text-gray-500 text-sm">
-                                                            {new Date(c.created_at).toLocaleDateString("pt-BR", {
-                                                                day: "2-digit",
-                                                                month: "short",
-                                                                hour: "2-digit",
-                                                                minute: "2-digit"
-                                                            })}
-                                                        </span>
+
+                                                    {/* Data Columns (Desktop) / Second Row (Mobile) */}
+                                                    <div className="pl-11 md:pl-0 md:contents">
+                                                        <div className="md:col-span-2 flex items-center">
+                                                            <span className="text-gray-400 font-mono text-sm">
+                                                                {mascararCPF(c.cpf)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="md:col-span-3 flex items-center">
+                                                            <span className="text-gray-400 text-sm truncate">
+                                                                {c.email_fornecido || "—"}
+                                                            </span>
+                                                        </div>
+                                                        <div className="hidden md:flex md:col-span-2 items-center">
+                                                            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                                                {c.source_campaign || "direct"}
+                                                            </span>
+                                                        </div>
+                                                        <div className="hidden md:flex md:col-span-2 items-center">
+                                                            <span className="text-gray-500 text-sm">
+                                                                {new Date(c.created_at).toLocaleDateString("pt-BR", {
+                                                                    day: "2-digit",
+                                                                    month: "short",
+                                                                    hour: "2-digit",
+                                                                    minute: "2-digit"
+                                                                })}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))}
@@ -1421,6 +1497,6 @@ export default function AdminConteudosPage() {
                     scrollbar-width: none;
                 }
             `}</style>
-        </div>
+        </div >
     );
 }
