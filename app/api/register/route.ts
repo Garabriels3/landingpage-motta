@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validarCPF, validarEmail, validarNome, validarComprimento, limparCPF } from "@/lib/validations";
-import { buscarProcessoPorCPF, gravarConsentimento, verificarRateLimitPersistente } from "@/lib/supabase";
+import { buscarProcessoPorCPF, gravarConsentimento, verificarRateLimitPersistente, buscarCasoPorCPFOuEmail, vincularConsentimentoAoCaso } from "@/lib/supabase";
 import { extrairIP, extrairUserAgent, verificarRateLimit, TERMOS_HASH } from "@/lib/security";
 
 // Forçar renderização dinâmica (usa request.headers e request.json)
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
         // Extrair dados do request
         const body = await request.json();
         const { nome, cpf, email, hcaptchaToken, campaign: campaignRaw } = body;
-        
+
         // Sanitizar e validar campaign (prevenção de injection)
         let campaign: string | null = null;
         if (campaignRaw) {
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
         // 3. VALIDAÇÃO DE IP (SEGURANÇA)
 
         const ip = extrairIP(request);
-        
+
         // Rejeitar requests sem IP válido (proteção contra bots)
         if (!ip) {
             console.warn("⚠️ Request rejeitado: IP não identificado", {
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
                 RATE_LIMIT_IP,
                 RATE_LIMIT_WINDOW
             );
-            
+
             if (!ipAllowed) {
                 return NextResponse.json(
                     { error: "Muitas tentativas deste IP. Por favor, aguarde 1 hora." },
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
                 RATE_LIMIT_CPF,
                 RATE_LIMIT_WINDOW
             );
-            
+
             if (!cpfAllowed) {
                 return NextResponse.json(
                     { error: "Muitas tentativas com este CPF. Por favor, aguarde 1 hora." },
@@ -177,13 +177,27 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 5. BUSCAR PROCESSO NO BANCO
-
+        // 5. BUSCAR PROCESSO NO BANCO (AGORA NA TABELA CASOS)
         let numeroProcesso: string | null = null;
+        let casoEncontradoId: string | null = null;
 
         try {
-            const processo = await buscarProcessoPorCPF(cpfLimpo);
-            numeroProcesso = processo ? processo.numero_processo : null;
+            // Nova lógica: busca na tabela 'casos' por CPF ou Email
+            // Importar buscarCasoPorCPFOuEmail de lib/supabase (precisa adicionar no import la em cima)
+            const caso = await buscarCasoPorCPFOuEmail(cpfLimpo, email);
+
+            if (caso) {
+                numeroProcesso = caso.NUMERO_PROCESSO;
+                casoEncontradoId = caso.id;
+                console.log("✅ Caso encontrado:", { id: caso.id, processo: numeroProcesso });
+            } else {
+                // Fallback para tabela antiga 'processos' se desejar manter retrocompatibilidade
+                // ou simplesmente assumir null
+                const processoAntigo = await buscarProcessoPorCPF(cpfLimpo);
+                if (processoAntigo) {
+                    numeroProcesso = processoAntigo.numero_processo;
+                }
+            }
         } catch (error) {
             console.error("Erro ao buscar processo:", error);
             // Não retornar erro ao usuário - continuar com null
@@ -204,9 +218,16 @@ export async function POST(request: NextRequest) {
                 user_agent: userAgent,
                 source_campaign: campaign || "direct",
             });
-            
+
             // Log de sucesso para debug
             console.log("✅ Consentimento gravado com sucesso. ID:", consentimentoId);
+
+            // VINCULAR AO CASO SE ENCONTRADO
+            if (casoEncontradoId) {
+                await vincularConsentimentoAoCaso(casoEncontradoId, consentimentoId);
+                console.log("✅ Consentimento vinculado ao caso:", casoEncontradoId);
+            }
+
         } catch (error: any) {
             // Log detalhado do erro
             console.error("❌ Erro ao gravar consentimento:");
@@ -215,9 +236,9 @@ export async function POST(request: NextRequest) {
             console.error("   Detalhes:", error?.details);
             console.error("   Hint:", error?.hint);
             console.error("   Erro completo:", JSON.stringify(error, null, 2));
-            
+
             return NextResponse.json(
-                { 
+                {
                     error: "Erro ao processar solicitação. Por favor, tente novamente.",
                     debug: process.env.NODE_ENV === "development" ? {
                         message: error?.message,
@@ -251,7 +272,7 @@ export async function POST(request: NextRequest) {
             "https://localhost:3000",
         ].filter(Boolean) as string[];
 
-        const isAllowedOrigin = origin && allowedOrigins.some(allowed => 
+        const isAllowedOrigin = origin && allowedOrigins.some(allowed =>
             origin === allowed || origin.startsWith(allowed)
         );
 
@@ -274,7 +295,7 @@ export async function POST(request: NextRequest) {
 export async function OPTIONS(request: NextRequest) {
     // Obter origem da requisição
     const origin = request.headers.get("origin");
-    
+
     // Lista de origens permitidas
     const allowedOrigins = [
         process.env.NEXT_PUBLIC_APP_URL,
@@ -283,13 +304,13 @@ export async function OPTIONS(request: NextRequest) {
     ].filter(Boolean) as string[];
 
     // Verificar se a origem é permitida
-    const isAllowedOrigin = origin && allowedOrigins.some(allowed => 
+    const isAllowedOrigin = origin && allowedOrigins.some(allowed =>
         origin === allowed || origin.startsWith(allowed)
     );
 
     // Se não houver NEXT_PUBLIC_APP_URL configurado, usar origem da requisição (apenas em dev)
-    const allowOrigin = isAllowedOrigin 
-        ? origin 
+    const allowOrigin = isAllowedOrigin
+        ? origin
         : (process.env.NODE_ENV === "development" && origin)
             ? origin
             : (process.env.NEXT_PUBLIC_APP_URL || null);

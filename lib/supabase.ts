@@ -244,3 +244,134 @@ export async function verificarRateLimitPersistente(
         return true;
     }
 }
+
+// ============================================
+// NOVAS FUNÇÕES: TABELA CASOS
+// ============================================
+
+export interface Caso {
+    id: string; // assumindo uuid pelo seu prompt, ou number se for serial
+    NUMERO_PROCESSO: string;
+    REU: string;
+    DOC_REU: string;
+    EMAIL: string;
+    // Outros campos relevantes para display
+    consentimento_id?: string;
+    status_consentimento?: boolean; // campo calculado ou join
+    created_at?: string;
+}
+
+/**
+ * Buscar caso por CPF (DOC_REU) ou Email
+ * @param cpf
+ * @param email
+ */
+export async function buscarCasoPorCPFOuEmail(
+    cpf: string,
+    email: string
+): Promise<Caso | null> {
+    try {
+        // Tenta buscar pelo CPF primeiro (DOC_REU)
+        if (cpf) {
+            // DOC_REU é BigInt, tenta remover zeros à esquerda para garantir match
+            const cpfNumerico = cpf.replace(/^0+/, "") || cpf;
+
+            // Busca usando a versão string original OU a versão numérica (string sem zero à esquerda)
+            // Se o campo for BigInt, ele aceitará a string que parecer um número
+            const { data, error } = await supabaseServer
+                .from("casos")
+                .select("*")
+                .or(`DOC_REU.eq.${cpf},DOC_REU.eq.${cpfNumerico}`)
+                .limit(1)
+                .single();
+
+            if (data) return data;
+
+            // Ignora erro de não encontrado e tenta proximo
+            if (error && error.code !== "PGRST116") {
+                console.error("Erro ao buscar caso por CPF:", error);
+            }
+        }
+
+        // Tenta buscar pelo Email
+        if (email) {
+            const { data, error } = await supabaseServer
+                .from("casos")
+                .select("*")
+                .eq("EMAIL", email)
+                .limit(1)
+                .single();
+
+            if (data) return data;
+        }
+
+        return null;
+    } catch (error) {
+        console.error("Erro geral na busca de casos:", error);
+        return null;
+    }
+}
+
+/**
+ * Vincula um consentimento criado a um caso existente
+ */
+export async function vincularConsentimentoAoCaso(
+    casoId: string,
+    consentimentoId: string
+): Promise<boolean> {
+    try {
+        const { error } = await supabaseServer
+            .from("casos")
+            .update({ consentimento_id: consentimentoId })
+            .eq("id", casoId);
+
+        if (error) {
+            console.error("Erro ao vincular consentimento ao caso:", error);
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.error("Erro exceção ao vincular:", error);
+        return false;
+    }
+}
+
+/**
+ * Listar casos para o admin, com paginação e filtros
+ */
+export async function listarCasosAdmin(
+    page = 0,
+    limit = 50,
+    termoBusca = ""
+): Promise<{ data: Caso[]; count: number }> {
+    try {
+        let query = supabaseServer
+            .from("casos")
+            .select("*, consentimentos(id, created_at)", { count: "exact" });
+
+        if (termoBusca) {
+            // Se for numérico, tenta DOC_REU exato ou busca textual.
+            const isNumeric = /^\d+$/.test(termoBusca);
+            if (isNumeric) {
+                const termoNum = termoBusca.replace(/^0+/, "") || termoBusca;
+                query = query.or(`REU.ilike.%${termoBusca}%,EMAIL.ilike.%${termoBusca}%,DOC_REU.eq.${termoNum}`);
+            } else {
+                query = query.or(`REU.ilike.%${termoBusca}%,EMAIL.ilike.%${termoBusca}%`);
+            }
+        }
+
+        const from = page * limit;
+        const to = from + limit - 1;
+
+        const { data, count, error } = await query
+            .range(from, to)
+            .order("id", { ascending: true });
+
+        if (error) throw error;
+
+        return { data: data || [], count: count || 0 };
+    } catch (error) {
+        console.error("Erro ao listar casos admin:", error);
+        return { data: [], count: 0 };
+    }
+}
