@@ -6,10 +6,18 @@ export default function Footer() {
             <div className="max-w-7xl mx-auto px-6">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                     {/* Logo */}
-                    <div className="flex items-center gap-2 hover:opacity-100 transition-all duration-500">
-                        <span className="material-symbols-outlined text-primary-darker dark:text-primary">balance</span>
-                        <span className="text-gray-700 dark:text-dark-textMain font-bold">Wagner Chaves Advocacia</span>
-                    </div>
+                    <a
+                        href="https://wagnerchaves.adv.br/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 hover:opacity-80 transition-all duration-500"
+                    >
+                        <img
+                            src="https://wagnerchaves.adv.br/wp-content/uploads/2023/03/logo.png"
+                            alt="Wagner Chaves Advocacia"
+                            className="h-10 w-auto object-contain"
+                        />
+                    </a>
 
                     {/* Copyright */}
                     <div className="text-center md:text-right">

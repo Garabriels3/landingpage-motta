@@ -8,25 +8,18 @@ export default function Header() {
         <header className="w-full glass-effect sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
                 {/* Logo e Nome */}
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                        <span className="material-symbols-outlined text-2xl">balance</span>
-                    </div>
-                    <div>
-                        <ConteudoText
-                            chave="header.logo.nome"
-                            fallback="Wagner Chaves"
-                            className="text-text-main dark:text-dark-textMain text-lg font-bold leading-tight tracking-tight"
-                            as="h2"
-                        />
-                        <ConteudoText
-                            chave="header.logo.subtitulo"
-                            fallback="Advocacia Especializada"
-                            className="text-text-muted dark:text-dark-textSecondary text-xs font-medium tracking-wide uppercase"
-                            as="p"
-                        />
-                    </div>
-                </div>
+                <a
+                    href="https://wagnerchaves.adv.br/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block hover:opacity-80 transition-opacity"
+                >
+                    <img
+                        src="https://wagnerchaves.adv.br/wp-content/uploads/2023/03/logo.png"
+                        alt="Wagner Chaves Advocacia"
+                        className="h-10 md:h-12 w-auto object-contain"
+                    />
+                </a>
 
                 {/* Right Side - Badge + Theme Toggle */}
                 <div className="flex items-center gap-3">
