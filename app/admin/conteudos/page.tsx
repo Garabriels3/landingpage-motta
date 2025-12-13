@@ -93,10 +93,9 @@ type Caso = {
 
 // Configuração das páginas para organizar a edição
 const PAGINAS_CONFIG: Record<string, { nome: string; icone: string }> = {
-    "home": { nome: "Página Inicial", icone: "home" },
-    "sobre": { nome: "Sobre o Escritório", icone: "business" },
-    "areas": { nome: "Áreas de Atuação", icone: "gavel" },
-    "contato": { nome: "Rodapé e Contato", icone: "contact_mail" },
+    "home": { nome: "Home (Página Inicial)", icone: "home" },
+    "confirmacao": { nome: "Confirmação (Resultado)", icone: "check_circle" },
+    "header": { nome: "Header (Navegação)", icone: "menu" },
 };
 
 export default function AdminConteudosPage() {
