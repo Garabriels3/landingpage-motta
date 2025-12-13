@@ -150,6 +150,11 @@ export default function AdminConteudosPage() {
     const [casoSelecionado, setCasoSelecionado] = useState<Caso | null>(null);
     const [paginaCasos, setPaginaCasos] = useState(0);
 
+    // Estados - Filtros Casos
+    const [filtroAdvogado, setFiltroAdvogado] = useState<'todos' | 'com_advogado' | 'sem_advogado'>('todos');
+    const [filtroDataInicio, setFiltroDataInicio] = useState('');
+    const [filtroDataFim, setFiltroDataFim] = useState('');
+
     // ============================================
     // FUNÇÕES DE SESSÃO SEGURA
     // ============================================
@@ -236,6 +241,17 @@ export default function AdminConteudosPage() {
             if (token) carregarConteudos(token);
         }
     }, [filtroPagina]);
+
+    // Recarregar casos quando filtros mudam
+    useEffect(() => {
+        if (autenticado && activeTab === "casos") {
+            const token = getSecureSession();
+            if (token) {
+                setPaginaCasos(0);
+                carregarCasos(token, 0, buscaCasos);
+            }
+        }
+    }, [filtroAdvogado, filtroDataInicio, filtroDataFim]);
 
     // ============================================
     // FUNÇÕES AUXILIARES
@@ -394,6 +410,11 @@ export default function AdminConteudosPage() {
             params.append("page", String(page));
             params.append("limit", "50");
             if (search) params.append("q", search);
+
+            // Filtros
+            if (filtroAdvogado !== 'todos') params.append("advogado", filtroAdvogado);
+            if (filtroDataInicio) params.append("data_inicio", filtroDataInicio);
+            if (filtroDataFim) params.append("data_fim", filtroDataFim);
 
             const response = await fetch(`/api/admin/casos?${params.toString()}`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -671,6 +692,61 @@ export default function AdminConteudosPage() {
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Toolbar de Filtros */}
+                                <div className="mt-6 border-t border-white/5 pt-6">
+                                    <div className="flex flex-wrap items-center gap-4 bg-[#2a261f] border border-white/5 p-3 rounded-xl">
+                                        <div className="flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-gray-400 text-[20px]">filter_alt</span>
+                                            <span className="text-gray-400 text-sm font-medium">Filtrar por:</span>
+                                        </div>
+
+                                        {/* Select Advogado */}
+                                        <select
+                                            value={filtroAdvogado}
+                                            onChange={(e) => setFiltroAdvogado(e.target.value as any)}
+                                            className="bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white focus:border-primary focus:outline-none min-w-[160px]"
+                                        >
+                                            <option value="todos">Todos os Status</option>
+                                            <option value="com_advogado">Com Advogado</option>
+                                            <option value="sem_advogado">Sem Advogado</option>
+                                        </select>
+
+                                        <div className="h-6 w-px bg-white/10 mx-2 hidden md:block"></div>
+
+                                        {/* Data Distribuição */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-500 text-xs font-bold uppercase tracking-wider">Distribuição:</span>
+                                            <input
+                                                type="date"
+                                                value={filtroDataInicio}
+                                                onChange={(e) => setFiltroDataInicio(e.target.value)}
+                                                className="bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white placeholder-gray-500 focus:border-primary focus:outline-none"
+                                            />
+                                            <span className="text-gray-600">—</span>
+                                            <input
+                                                type="date"
+                                                value={filtroDataFim}
+                                                onChange={(e) => setFiltroDataFim(e.target.value)}
+                                                className="bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white placeholder-gray-500 focus:border-primary focus:outline-none"
+                                            />
+                                        </div>
+
+                                        {(filtroAdvogado !== 'todos' || filtroDataInicio || filtroDataFim) && (
+                                            <button
+                                                onClick={() => {
+                                                    setFiltroAdvogado('todos');
+                                                    setFiltroDataInicio('');
+                                                    setFiltroDataFim('');
+                                                }}
+                                                className="ml-auto text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
+                                            >
+                                                <span className="material-symbols-outlined text-[14px]">close</span>
+                                                Limpar Filtros
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </header>
 
@@ -732,6 +808,20 @@ export default function AdminConteudosPage() {
                                                                 </div>
                                                                 <div className="hidden md:block md:col-span-3 text-right">
                                                                     <div className="text-primary font-mono text-sm truncate" title={caso.NUMERO_PROCESSO}>{caso.NUMERO_PROCESSO}</div>
+                                                                    <div className="flex items-center justify-end gap-3 mt-1">
+                                                                        {caso.DATA_DISTRIBUICAO && (
+                                                                            <span className="text-xs text-gray-500 flex items-center gap-1" title="Data de Distribuição">
+                                                                                <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+                                                                                {new Date(caso.DATA_DISTRIBUICAO).toLocaleDateString('pt-BR')}
+                                                                            </span>
+                                                                        )}
+                                                                        {caso.ADVOGADO && (
+                                                                            <span className="text-xs text-amber-500 flex items-center gap-1 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20" title={`Advogado: ${caso.ADVOGADO}`}>
+                                                                                <span className="material-symbols-outlined text-[14px]">gavel</span>
+                                                                                Adv.
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         )

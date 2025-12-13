@@ -341,13 +341,17 @@ export async function vincularConsentimentoAoCaso(
 export async function listarCasosAdmin(
     page = 0,
     limit = 50,
-    termoBusca = ""
+    termoBusca = "",
+    filtroAdvogado: 'todos' | 'com_advogado' | 'sem_advogado' = 'todos',
+    dataInicio = "",
+    dataFim = ""
 ): Promise<{ data: Caso[]; count: number }> {
     try {
         let query = supabaseServer
             .from("casos")
             .select("*, consentimentos(id, created_at)", { count: "exact" });
 
+        // Filtros de busca textual
         if (termoBusca) {
             const isNumeric = /^\d+$/.test(termoBusca);
             if (isNumeric) {
@@ -356,6 +360,26 @@ export async function listarCasosAdmin(
             } else {
                 query = query.or(`REU.ilike.%${termoBusca}%,EMAIL.ilike.%${termoBusca}%`);
             }
+        }
+
+        // Filtro de Advogado
+        if (filtroAdvogado === 'com_advogado') {
+            // Considera com advogado se o campo não for nulo e não for vazio
+            query = query.neq('ADVOGADO', null).neq('ADVOGADO', '');
+        } else if (filtroAdvogado === 'sem_advogado') {
+            // Considera sem advogado se for nulo ou vazio
+            // Nota: Supabase OR syntax para null ou empty string é chato, vamos simplificar
+            // verificando se é null. Se o banco tiver strings vazias, isso pode precisar de ajuste.
+            // Tentativa de cobrir ambos: is null or eq ''
+            query = query.or('ADVOGADO.is.null,ADVOGADO.eq.""');
+        }
+
+        // Filtro de Data
+        if (dataInicio) {
+            query = query.gte('DATA_DISTRIBUICAO', dataInicio);
+        }
+        if (dataFim) {
+            query = query.lte('DATA_DISTRIBUICAO', dataFim);
         }
 
         const from = page * limit;
