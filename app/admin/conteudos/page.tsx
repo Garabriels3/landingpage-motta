@@ -1,9 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
-import { Dialog } from "@headlessui/react";
-import { Caso, listarCasosAdmin } from "@/lib/supabase";
 
 // Tipos
 type ConteudoTexto = {
@@ -23,6 +20,15 @@ type Consentimento = {
     aceitou_termos: boolean;
     source_campaign: string;
     created_at: string;
+};
+
+type Caso = {
+    id: string;
+    NUMERO_PROCESSO: string;
+    REU: string;
+    DOC_REU: string;
+    EMAIL: string;
+    consentimento_id?: string;
 };
 
 // Configuração das páginas para organizar a edição
@@ -367,8 +373,8 @@ export default function AdminConteudosPage() {
                         <button
                             onClick={() => setActiveTab("textos")}
                             className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "textos"
-                                    ? "bg-primary text-black shadow-lg shadow-primary/20"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                                ? "bg-primary text-black shadow-lg shadow-primary/20"
+                                : "text-gray-400 hover:text-white hover:bg-white/5"
                                 }`}
                         >
                             <span className="material-symbols-outlined">edit_document</span>
@@ -377,8 +383,8 @@ export default function AdminConteudosPage() {
                         <button
                             onClick={() => setActiveTab("casos")}
                             className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "casos"
-                                    ? "bg-primary text-black shadow-lg shadow-primary/20"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                                ? "bg-primary text-black shadow-lg shadow-primary/20"
+                                : "text-gray-400 hover:text-white hover:bg-white/5"
                                 }`}
                         >
                             <span className="material-symbols-outlined">folder_managed</span>
@@ -387,8 +393,8 @@ export default function AdminConteudosPage() {
                         <button
                             onClick={() => setActiveTab("cadastros")}
                             className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "cadastros"
-                                    ? "bg-primary text-black shadow-lg shadow-primary/20"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                                ? "bg-primary text-black shadow-lg shadow-primary/20"
+                                : "text-gray-400 hover:text-white hover:bg-white/5"
                                 }`}
                         >
                             <span className="material-symbols-outlined">group</span>
@@ -577,8 +583,8 @@ export default function AdminConteudosPage() {
                                     <button
                                         onClick={() => setFiltroPagina("all")}
                                         className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${filtroPagina === "all"
-                                                ? "bg-white text-black"
-                                                : "bg-[#2a261f] text-gray-400 hover:text-white hover:bg-[#332d25]"
+                                            ? "bg-white text-black"
+                                            : "bg-[#2a261f] text-gray-400 hover:text-white hover:bg-[#332d25]"
                                             }`}
                                     >
                                         Todos
@@ -588,8 +594,8 @@ export default function AdminConteudosPage() {
                                             key={key}
                                             onClick={() => setFiltroPagina(key)}
                                             className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${filtroPagina === key
-                                                    ? "bg-white text-black"
-                                                    : "bg-[#2a261f] text-gray-400 hover:text-white hover:bg-[#332d25]"
+                                                ? "bg-white text-black"
+                                                : "bg-[#2a261f] text-gray-400 hover:text-white hover:bg-[#332d25]"
                                                 }`}
                                         >
                                             {PAGINAS_CONFIG[key].nome}
