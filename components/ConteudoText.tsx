@@ -168,3 +168,61 @@ export function forcarAtualizacaoConteudos() {
         window.dispatchEvent(new Event(CONTEUDO_UPDATE_EVENT));
     }
 }
+
+/**
+ * Hook para carregar URLs dinâmicas do CMS
+ * Usado para links que precisam ser editáveis pelo admin
+ * 
+ * @param chave - Chave do conteúdo no banco (ex: 'confirmacao.tjrj.link')
+ * @param fallbackUrl - URL padrão caso não encontre no banco
+ * @returns URL atual do conteúdo
+ */
+export function useConteudoLink(chave: string, fallbackUrl: string): string {
+    const [url, setUrl] = useState<string>(fallbackUrl);
+
+    useEffect(() => {
+        const buscarLink = async () => {
+            try {
+                const cacheBuster = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                const response = await fetch(
+                    `/api/conteudos?chave=${encodeURIComponent(chave)}&_=${cacheBuster}`,
+                    {
+                        cache: 'no-store',
+                        next: { revalidate: 0 },
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache',
+                        },
+                    }
+                );
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.data?.texto) {
+                        setUrl(data.data.texto);
+                    }
+                }
+            } catch (error) {
+                console.warn(`Erro ao buscar link "${chave}":`, error);
+                // Em caso de erro, manter fallback
+            }
+        };
+
+        buscarLink();
+
+        // Recarregar quando houver atualização de conteúdo
+        const handleUpdate = () => buscarLink();
+        window.addEventListener(CONTEUDO_UPDATE_EVENT, handleUpdate);
+
+        // Recarregar periodicamente (60 segundos)
+        const interval = setInterval(() => {
+            buscarLink();
+        }, 60000);
+
+        return () => {
+            window.removeEventListener(CONTEUDO_UPDATE_EVENT, handleUpdate);
+            clearInterval(interval);
+        };
+    }, [chave, fallbackUrl]);
+
+    return url;
+}

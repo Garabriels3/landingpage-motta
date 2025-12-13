@@ -5,13 +5,16 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { tracking } from "@/lib/tracking";
-import ConteudoText from "@/components/ConteudoText";
+import ConteudoText, { useConteudoLink } from "@/components/ConteudoText";
 
 function ConfirmacaoContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [copied, setCopied] = useState(false);
     const [numeroProcesso, setNumeroProcesso] = useState<string | null>(null);
+
+    // Carregar link dinâmico do TJRJ
+    const tjrjLink = useConteudoLink('confirmacao.tjrj.link', 'https://www.tjrj.jus.br/');
 
     useEffect(() => {
         const numero = searchParams.get("numero");
@@ -122,7 +125,7 @@ function ConfirmacaoContent() {
 
                             <div className="bg-background dark:bg-dark-bgAlt border-2 border-primary/30 dark:border-dark-border rounded-xl p-8 shadow-inner">
                                 <a
-                                    href="https://www.tjrj.jus.br/"
+                                    href={tjrjLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-2xl md:text-3xl font-mono font-bold text-primary text-center tracking-wide select-all block hover:text-primary-light transition-colors cursor-pointer hover:underline"
@@ -211,7 +214,7 @@ function ConfirmacaoContent() {
                                         chaveTexto: "confirmacao.consulta.passo2.texto",
                                         title: "Acesse o portal de consultas",
                                         desc: "Acesse o portal do Tribunal de Justiça do RJ.",
-                                        link: "https://www.tjrj.jus.br/"
+                                        link: tjrjLink
                                     },
                                     {
                                         num: 3,
