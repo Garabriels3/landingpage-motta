@@ -1232,7 +1232,7 @@ export default function AdminConteudosPage() {
                                 </div>
 
                                 {/* Filters */}
-                                <div className="flex gap-2 mt-6 overflow-x-auto pb-2 scrollbar-hide">
+                                <div className="flex gap-2 mt-6 overflow-x-auto pb-2 w-full touch-pan-x snap-x">
                                     <button
                                         onClick={() => setFiltroPagina("all")}
                                         className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${filtroPagina === "all"
