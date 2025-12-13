@@ -60,12 +60,18 @@ export default function AdminConteudosPage() {
     const [consentimentos, setConsentimentos] = useState<Consentimento[]>([]);
     const [carregandoConsentimentos, setCarregandoConsentimentos] = useState(false);
     const [totalConsentimentos, setTotalConsentimentos] = useState(0);
+    const [buscaConsentimentos, setBuscaConsentimentos] = useState('');
+    const [consentimentoSelecionado, setConsentimentoSelecionado] = useState<Consentimento | null>(null);
+    const [paginaConsentimentos, setPaginaConsentimentos] = useState(0);
 
-    // Estados - Casos (NOVO)
+    // Estados - Casos
     const [casos, setCasos] = useState<Caso[]>([]);
     const [carregandoCasos, setCarregandoCasos] = useState(false);
     const [totalCasos, setTotalCasos] = useState(0);
     const [buscaCasos, setBuscaCasos] = useState('');
+    const [casoSelecionado, setCasoSelecionado] = useState<Caso | null>(null);
+    const [paginaCasos, setPaginaCasos] = useState(0);
+
 
     // ============================================
     // EFEITOS (USE EFFECT)
@@ -92,6 +98,14 @@ export default function AdminConteudosPage() {
             }
         }
     }, [activeTab, autenticado]);
+
+    // Recarregar conteúdos quando filtro de página muda
+    useEffect(() => {
+        if (autenticado && activeTab === "textos") {
+            const token = localStorage.getItem("admin_token");
+            if (token) carregarConteudos(token);
+        }
+    }, [filtroPagina]);
 
     // ============================================
     // FUNÇÕES AUXILIARES
@@ -216,10 +230,15 @@ export default function AdminConteudosPage() {
     };
 
     // CADASTROS / CONSENTIMENTOS
-    const carregarConsentimentos = async (token: string) => {
+    const carregarConsentimentos = async (token: string, page = 0, search = '') => {
         setCarregandoConsentimentos(true);
         try {
-            const response = await fetch("/api/admin/consentimentos", {
+            const params = new URLSearchParams();
+            params.append("page", String(page + 1)); // API usa 1-indexed
+            params.append("limit", "50");
+            if (search) params.append("q", search);
+
+            const response = await fetch(`/api/admin/consentimentos?${params.toString()}`, {
                 headers: { Authorization: `Bearer ${token}` },
                 cache: 'no-store',
             });
@@ -240,12 +259,14 @@ export default function AdminConteudosPage() {
         return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.***-$4");
     };
 
-    // CASOS (NOVO)
-    const carregarCasos = async (token: string, busca = '') => {
+    // CASOS
+    const carregarCasos = async (token: string, page = 0, search = '') => {
         setCarregandoCasos(true);
         try {
             const params = new URLSearchParams();
-            if (busca) params.append("q", busca);
+            params.append("page", String(page));
+            params.append("limit", "50");
+            if (search) params.append("q", search);
 
             const response = await fetch(`/api/admin/casos?${params.toString()}`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -264,11 +285,43 @@ export default function AdminConteudosPage() {
         }
     };
 
+
     const handleBuscaCasos = (e: React.FormEvent) => {
         e.preventDefault();
         const token = localStorage.getItem("admin_token");
-        if (token) carregarCasos(token, buscaCasos);
-    }
+        setPaginaCasos(0); // Reset to first page on search
+        if (token) carregarCasos(token, 0, buscaCasos);
+    };
+
+    const handleBuscaConsentimentos = (e: React.FormEvent) => {
+        e.preventDefault();
+        const token = localStorage.getItem("admin_token");
+        setPaginaConsentimentos(0);
+        if (token) carregarConsentimentos(token, 0, buscaConsentimentos);
+    };
+
+    // Funções de paginação para Casos
+    const totalPaginasCasos = Math.ceil(totalCasos / 50);
+    const irParaPaginaCasos = (page: number) => {
+        const token = localStorage.getItem("admin_token");
+        if (token && page >= 0 && page < totalPaginasCasos) {
+            setPaginaCasos(page);
+            setCasoSelecionado(null);
+            carregarCasos(token, page, buscaCasos);
+        }
+    };
+
+    // Funções de paginação para Consentimentos
+    const totalPaginasConsentimentos = Math.ceil(totalConsentimentos / 50);
+    const irParaPaginaConsentimentos = (page: number) => {
+        const token = localStorage.getItem("admin_token");
+        if (token && page >= 0 && page < totalPaginasConsentimentos) {
+            setPaginaConsentimentos(page);
+            setConsentimentoSelecionado(null);
+            carregarConsentimentos(token, page, buscaConsentimentos);
+        }
+    };
+
 
     // ============================================
     // FUNÇÕES DE VIEW
@@ -451,7 +504,7 @@ export default function AdminConteudosPage() {
                                         <button
                                             onClick={() => {
                                                 const token = localStorage.getItem("admin_token");
-                                                if (token) carregarCasos(token, buscaCasos);
+                                                if (token) carregarCasos(token, paginaCasos, buscaCasos);
                                             }}
                                             className="flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-[#2a261f] border border-white/10 text-gray-300 hover:text-white hover:border-primary/50 text-sm font-medium transition-colors"
                                         >
@@ -475,48 +528,127 @@ export default function AdminConteudosPage() {
                                         <p className="text-gray-400">Nenhum caso encontrado.</p>
                                     </div>
                                 ) : (
-                                    <div className="bg-[#2a261f] rounded-xl border border-white/5 overflow-hidden">
-                                        <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-[#1e1a14] border-b border-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                            <div className="col-span-1 text-center">Status</div>
-                                            <div className="col-span-3">Réu / Nome</div>
-                                            <div className="col-span-2">CPF / Doc</div>
-                                            <div className="col-span-4">Email</div>
-                                            <div className="col-span-2 text-right">Processo</div>
+                                    <div className="flex gap-6">
+                                        {/* Lista de casos */}
+                                        <div className={`transition-all duration-300 ${casoSelecionado ? 'w-[55%]' : 'w-full'}`}>
+                                            <div className="bg-[#2a261f] rounded-xl border border-white/5 overflow-hidden">
+                                                <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-[#1e1a14] border-b border-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                                    <div className="col-span-1 text-center">Status</div>
+                                                    <div className="col-span-4">Réu / Nome</div>
+                                                    <div className="col-span-4">Email</div>
+                                                    <div className="col-span-3 text-right">Processo</div>
+                                                </div>
+
+                                                <div className="divide-y divide-white/5 max-h-[60vh] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                                                    {casos.map((caso) => {
+                                                        const temConsentimento = !!caso.consentimento_id;
+                                                        const isSelected = casoSelecionado?.id === caso.id;
+
+                                                        return (
+                                                            <div
+                                                                key={caso.id}
+                                                                onClick={() => setCasoSelecionado(isSelected ? null : caso)}
+                                                                className={`grid grid-cols-12 gap-4 px-6 py-4 cursor-pointer transition-all items-center ${isSelected ? 'bg-primary/10 border-l-4 border-primary' : 'hover:bg-white/5'}`}
+                                                            >
+                                                                <div className="col-span-1 flex justify-center">
+                                                                    {temConsentimento ? (
+                                                                        <span className="material-symbols-outlined text-green-500" title="Consentimento Confirmado">check_circle</span>
+                                                                    ) : (
+                                                                        <span className="material-symbols-outlined text-gray-600" title="Aguardando Cadastro">pending</span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="col-span-4">
+                                                                    <div className="text-white font-medium truncate" title={caso.REU}>{caso.REU}</div>
+                                                                </div>
+                                                                <div className="col-span-4">
+                                                                    <div className="text-gray-400 text-sm truncate" title={caso.EMAIL}>{caso.EMAIL || "-"}</div>
+                                                                </div>
+                                                                <div className="col-span-3 text-right">
+                                                                    <div className="text-primary font-mono text-sm truncate" title={caso.NUMERO_PROCESSO}>{caso.NUMERO_PROCESSO}</div>
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+
+                                                {/* Paginação */}
+                                                <div className="px-6 py-4 border-t border-white/5 bg-[#1e1a14]/50 flex items-center justify-between">
+                                                    <div className="text-xs text-gray-500">
+                                                        Mostrando {casos.length} de {totalCasos} resultados
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => irParaPaginaCasos(paginaCasos - 1)}
+                                                            disabled={paginaCasos === 0}
+                                                            className="h-8 px-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                                        >
+                                                            ← Anterior
+                                                        </button>
+                                                        <span className="text-xs text-gray-400 px-2">
+                                                            Página {paginaCasos + 1} de {totalPaginasCasos || 1}
+                                                        </span>
+                                                        <button
+                                                            onClick={() => irParaPaginaCasos(paginaCasos + 1)}
+                                                            disabled={paginaCasos >= totalPaginasCasos - 1}
+                                                            className="h-8 px-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                                        >
+                                                            Próxima →
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <div className="divide-y divide-white/5">
-                                            {casos.map((caso) => {
-                                                const temConsentimento = !!caso.consentimento_id;
-                                                // Se quisermos ser mais precisos, teríamos que fazer join, mas o update garante o ID.
+                                        {/* Card de Detalhes */}
+                                        <div className={`transition-all duration-300 overflow-hidden ${casoSelecionado ? 'w-[45%] opacity-100' : 'w-0 opacity-0'}`}>
+                                            {casoSelecionado && (
+                                                <div className="bg-[#2a261f] rounded-xl border border-white/5 p-6 h-fit sticky top-6">
+                                                    <div className="flex items-center justify-between mb-6">
+                                                        <h3 className="text-lg font-bold text-white">Detalhes do Caso</h3>
+                                                        <button
+                                                            onClick={() => setCasoSelecionado(null)}
+                                                            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[18px]">close</span>
+                                                        </button>
+                                                    </div>
 
-                                                return (
-                                                    <div key={caso.id} className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-white/5 transition-colors items-center">
-                                                        <div className="col-span-1 flex justify-center">
-                                                            {temConsentimento ? (
-                                                                <span className="material-symbols-outlined text-green-500" title="Consentimento Confirmado">check_circle</span>
-                                                            ) : (
-                                                                <span className="material-symbols-outlined text-gray-600" title="Aguardando Cadastro">pending</span>
-                                                            )}
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Nome / Réu</label>
+                                                            <p className="text-white font-medium mt-1">{casoSelecionado.REU}</p>
                                                         </div>
-                                                        <div className="col-span-3">
-                                                            <div className="text-white font-medium truncate" title={caso.REU}>{caso.REU}</div>
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">CPF / Documento</label>
+                                                            <p className="text-gray-300 font-mono mt-1">{casoSelecionado.DOC_REU || "—"}</p>
                                                         </div>
-                                                        <div className="col-span-2">
-                                                            <div className="text-gray-400 font-mono text-sm truncate" title={caso.DOC_REU}>{caso.DOC_REU || "-"}</div>
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Email</label>
+                                                            <p className="text-gray-300 mt-1">{casoSelecionado.EMAIL || "—"}</p>
                                                         </div>
-                                                        <div className="col-span-4">
-                                                            <div className="text-gray-400 text-sm truncate" title={caso.EMAIL}>{caso.EMAIL || "-"}</div>
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Número do Processo</label>
+                                                            <p className="text-primary font-mono font-medium mt-1">{casoSelecionado.NUMERO_PROCESSO}</p>
                                                         </div>
-                                                        <div className="col-span-2 text-right">
-                                                            <div className="text-primary font-mono text-sm truncate" title={caso.NUMERO_PROCESSO}>{caso.NUMERO_PROCESSO}</div>
+                                                        <div className="pt-4 border-t border-white/10">
+                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Status do Consentimento</label>
+                                                            <div className="flex items-center gap-2 mt-2">
+                                                                {casoSelecionado.consentimento_id ? (
+                                                                    <>
+                                                                        <span className="material-symbols-outlined text-green-500">verified</span>
+                                                                        <span className="text-green-400 font-medium">Consentimento Confirmado</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <span className="material-symbols-outlined text-yellow-500">schedule</span>
+                                                                        <span className="text-yellow-400">Aguardando Cadastro</span>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                )
-                                            })}
-                                        </div>
-
-                                        <div className="px-6 py-4 border-t border-white/5 bg-[#1e1a14]/50 text-xs text-gray-500 text-center">
-                                            Mostrando {casos.length} de {totalCasos} resultados
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
