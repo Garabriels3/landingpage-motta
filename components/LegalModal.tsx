@@ -163,9 +163,9 @@ export default function LegalModal({ isOpen, onClose, type }: LegalModalProps) {
             ></div>
 
             {/* Modal */}
-            <div className="relative bg-white dark:bg-dark-paper border-2 border-primary dark:border-dark-border rounded-3xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl animate-fade-in">
+            <div className="relative bg-white dark:bg-dark-paper border-2 border-primary dark:border-dark-border rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl animate-fade-in">
                 {/* Header */}
-                <div className="sticky top-0 bg-white dark:bg-dark-paper border-b border-primary/20 dark:border-dark-border px-6 py-4 flex items-center justify-between">
+                <div className="flex-none bg-white dark:bg-dark-paper border-b border-primary/20 dark:border-dark-border px-6 py-4 flex items-center justify-between rounded-t-3xl">
                     <h2 className="text-xl font-bold text-text-main dark:text-dark-textMain">
                         {loading ? "Carregando..." : content?.title}
                     </h2>
@@ -178,7 +178,7 @@ export default function LegalModal({ isOpen, onClose, type }: LegalModalProps) {
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
                     {loading ? (
                         <div className="flex items-center justify-center py-12">
                             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -189,6 +189,7 @@ export default function LegalModal({ isOpen, onClose, type }: LegalModalProps) {
                             prose-p:text-gray-600 dark:prose-p:text-dark-textBody
                             prose-li:text-gray-600 dark:prose-li:text-dark-textBody
                             prose-strong:text-gray-700 dark:prose-strong:text-dark-textMain
+                            pb-4
                         ">
                             {content?.content.split('\n').map((line, i) => {
                                 if (line.startsWith('## ')) {
@@ -216,7 +217,7 @@ export default function LegalModal({ isOpen, onClose, type }: LegalModalProps) {
                 </div>
 
                 {/* Footer */}
-                <div className="sticky bottom-0 bg-white dark:bg-dark-paper border-t border-primary/20 dark:border-dark-border px-6 py-4">
+                <div className="flex-none bg-white dark:bg-dark-paper border-t border-primary/20 dark:border-dark-border px-6 py-4 rounded-b-3xl">
                     <button
                         onClick={onClose}
                         className="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-full transition-colors"

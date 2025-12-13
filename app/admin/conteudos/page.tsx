@@ -107,6 +107,7 @@ const PAGINAS_CONFIG: Record<string, { nome: string; icone: string }> = {
     "home": { nome: "Home (Página Inicial)", icone: "home" },
     "confirmacao": { nome: "Confirmação (Resultado)", icone: "check_circle" },
     "header": { nome: "Header (Navegação)", icone: "menu" },
+    "legal": { nome: "Documentos Legais", icone: "gavel" },
 };
 
 export default function AdminConteudosPage() {
@@ -1375,12 +1376,7 @@ export default function AdminConteudosPage() {
                                         {/* For the actual code, I'll replace the entire rendering block as instructed. */}
 
                                         {/* Iteração de Páginas */}
-                                        {Object.entries({
-                                            "home": { nome: "Home (Página Inicial)", icone: "home" },
-                                            "confirmacao": { nome: "Confirmação (Resultado)", icone: "check_circle" },
-                                            "header": { nome: "Header (Navegação)", icone: "menu" },
-                                            "legal": { nome: "Documentos Legais", icone: "gavel" },
-                                        }).map(([pageKey, config]) => {
+                                        {Object.entries(PAGINAS_CONFIG).map(([pageKey, config]) => {
                                             const conteudosDaPagina = conteudosPorPagina[pageKey];
                                             if (!conteudosDaPagina || conteudosDaPagina.length === 0) return null;
 
