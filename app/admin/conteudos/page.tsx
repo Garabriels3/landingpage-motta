@@ -41,6 +41,11 @@ const PAGINAS_CONFIG: Record<string, { nome: string; icone: string }> = {
 
 export default function AdminConteudosPage() {
     // ============================================
+    // CONSTANTES DE SEGURANÇA
+    // ============================================
+    const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutos
+
+    // ============================================
     // ESTADOS
     // ============================================
     const [autenticado, setAutenticado] = useState(false);
@@ -72,12 +77,63 @@ export default function AdminConteudosPage() {
     const [casoSelecionado, setCasoSelecionado] = useState<Caso | null>(null);
     const [paginaCasos, setPaginaCasos] = useState(0);
 
+    // ============================================
+    // FUNÇÕES DE SESSÃO SEGURA
+    // ============================================
+    const getSecureSession = () => {
+        try {
+            const sessionData = sessionStorage.getItem("admin_session");
+            if (!sessionData) return null;
+
+            const session = JSON.parse(sessionData);
+            const now = Date.now();
+
+            // Verificar expiração (30 minutos)
+            if (now - session.timestamp > SESSION_TIMEOUT_MS) {
+                sessionStorage.removeItem("admin_session");
+                return null;
+            }
+
+            return session.token;
+        } catch {
+            sessionStorage.removeItem("admin_session");
+            return null;
+        }
+    };
+
+    const setSecureSession = (token: string) => {
+        const sessionData = {
+            token,
+            timestamp: Date.now()
+        };
+        sessionStorage.setItem("admin_session", JSON.stringify(sessionData));
+        // Migra localStorage antigo se existir
+        localStorage.removeItem("admin_token");
+    };
+
+    const clearSecureSession = () => {
+        sessionStorage.removeItem("admin_session");
+        localStorage.removeItem("admin_token");
+    };
+
+    const refreshSessionTimestamp = () => {
+        const token = getSecureSession();
+        if (token) {
+            setSecureSession(token);
+        }
+    };
 
     // ============================================
     // EFEITOS (USE EFFECT)
     // ============================================
     useEffect(() => {
-        const token = localStorage.getItem("admin_token");
+        // Migra sessão antiga do localStorage se existir
+        const oldToken = localStorage.getItem("admin_token");
+        if (oldToken) {
+            setSecureSession(oldToken);
+        }
+
+        const token = getSecureSession();
         if (token) {
             verificarToken(token);
         } else {
@@ -88,8 +144,9 @@ export default function AdminConteudosPage() {
     // Carregar dados ao trocar de aba se autenticado
     useEffect(() => {
         if (autenticado) {
-            const token = localStorage.getItem("admin_token");
+            const token = getSecureSession();
             if (token) {
+                refreshSessionTimestamp(); // Renova sessão a cada ação
                 if (activeTab === "cadastros") {
                     carregarConsentimentos(token);
                 } else if (activeTab === "casos") {
@@ -102,7 +159,7 @@ export default function AdminConteudosPage() {
     // Recarregar conteúdos quando filtro de página muda
     useEffect(() => {
         if (autenticado && activeTab === "textos") {
-            const token = localStorage.getItem("admin_token");
+            const token = getSecureSession();
             if (token) carregarConteudos(token);
         }
     }, [filtroPagina]);
@@ -114,19 +171,17 @@ export default function AdminConteudosPage() {
     // AUTH
     const verificarToken = async (token: string) => {
         try {
-            // Tenta validar o token fazendo uma request simples (ex: listar conteúdos com limit 1)
-            // Como nossa API é simples, vamos tentar listar conteúdos.
             const response = await fetch("/api/admin/conteudos?limit=1", {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (response.ok) {
                 setAutenticado(true);
-                carregarConteudos(token); // Carrega aba default
+                carregarConteudos(token);
             } else {
-                localStorage.removeItem("admin_token");
+                clearSecureSession();
             }
         } catch {
-            localStorage.removeItem("admin_token");
+            clearSecureSession();
         } finally {
             setVerificandoAuth(false);
         }
@@ -136,12 +191,11 @@ export default function AdminConteudosPage() {
         e.preventDefault();
         setErro("");
         try {
-            // Teste de login simples tentando bater na API
             const response = await fetch("/api/admin/conteudos?limit=1", {
                 headers: { Authorization: `Bearer ${senha}` },
             });
             if (response.ok) {
-                localStorage.setItem("admin_token", senha);
+                setSecureSession(senha);
                 setAutenticado(true);
                 carregarConteudos(senha);
             } else {
@@ -153,7 +207,7 @@ export default function AdminConteudosPage() {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem("admin_token");
+        clearSecureSession();
         setAutenticado(false);
         setSenha("");
     };
@@ -192,7 +246,7 @@ export default function AdminConteudosPage() {
     };
 
     const salvarAlteracoes = async () => {
-        const token = localStorage.getItem("admin_token");
+        const token = getSecureSession();
         if (!token) return;
 
         setSalvando(true);
@@ -288,14 +342,14 @@ export default function AdminConteudosPage() {
 
     const handleBuscaCasos = (e: React.FormEvent) => {
         e.preventDefault();
-        const token = localStorage.getItem("admin_token");
+        const token = getSecureSession();
         setPaginaCasos(0); // Reset to first page on search
         if (token) carregarCasos(token, 0, buscaCasos);
     };
 
     const handleBuscaConsentimentos = (e: React.FormEvent) => {
         e.preventDefault();
-        const token = localStorage.getItem("admin_token");
+        const token = getSecureSession();
         setPaginaConsentimentos(0);
         if (token) carregarConsentimentos(token, 0, buscaConsentimentos);
     };
@@ -303,7 +357,7 @@ export default function AdminConteudosPage() {
     // Funções de paginação para Casos
     const totalPaginasCasos = Math.ceil(totalCasos / 50);
     const irParaPaginaCasos = (page: number) => {
-        const token = localStorage.getItem("admin_token");
+        const token = getSecureSession();
         if (token && page >= 0 && page < totalPaginasCasos) {
             setPaginaCasos(page);
             setCasoSelecionado(null);
@@ -314,7 +368,7 @@ export default function AdminConteudosPage() {
     // Funções de paginação para Consentimentos
     const totalPaginasConsentimentos = Math.ceil(totalConsentimentos / 50);
     const irParaPaginaConsentimentos = (page: number) => {
-        const token = localStorage.getItem("admin_token");
+        const token = getSecureSession();
         if (token && page >= 0 && page < totalPaginasConsentimentos) {
             setPaginaConsentimentos(page);
             setConsentimentoSelecionado(null);
@@ -503,7 +557,7 @@ export default function AdminConteudosPage() {
 
                                         <button
                                             onClick={() => {
-                                                const token = localStorage.getItem("admin_token");
+                                                const token = getSecureSession();
                                                 if (token) carregarCasos(token, paginaCasos, buscaCasos);
                                             }}
                                             className="flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-[#2a261f] border border-white/10 text-gray-300 hover:text-white hover:border-primary/50 text-sm font-medium transition-colors"
@@ -851,8 +905,8 @@ export default function AdminConteudosPage() {
                                         </div>
                                         <button
                                             onClick={() => {
-                                                const token = localStorage.getItem("admin_token");
-                                                if (token) carregarConsentimentos(token);
+                                                const token = getSecureSession();
+                                                if (token) carregarConsentimentos(token, paginaConsentimentos, buscaConsentimentos);
                                             }}
                                             className="flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-[#2a261f] border border-white/10 text-gray-300 hover:text-white hover:border-primary/50 text-sm font-medium transition-colors"
                                         >
