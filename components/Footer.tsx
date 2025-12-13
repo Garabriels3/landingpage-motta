@@ -15,7 +15,7 @@ export default function Footer() {
                         <img
                             src="https://wagnerchaves.adv.br/wp-content/uploads/2023/03/logo.png"
                             alt="Wagner Chaves Advocacia"
-                            className="h-10 w-auto object-contain"
+                            className="h-10 w-auto object-contain dark:brightness-0 dark:invert filter transition-all duration-300"
                         />
                     </a>
 
