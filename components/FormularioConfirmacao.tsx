@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { validarCPF, limparCPF } from "@/lib/validations";
 import LegalModal from "./LegalModal";
 import { tracking } from "@/lib/tracking";
 import ConteudoText from "./ConteudoText";
@@ -13,8 +12,8 @@ declare global {
 export default function FormularioConfirmacao() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [formData, setFormData] = useState({ nome: "", cpf: "", email: "", aceitouTermos: false });
-    const [errors, setErrors] = useState<{ nome?: string; cpf?: string; email?: string; termos?: string; geral?: string }>({});
+    const [formData, setFormData] = useState({ nome: "", email: "", telefone: "", aceitouTermos: false });
+    const [errors, setErrors] = useState<{ nome?: string; email?: string; telefone?: string; termos?: string; geral?: string }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hcaptchaToken, setHcaptchaToken] = useState<string | null>(null);
     const [isDarkMode, setIsDarkMode] = useState(true);
@@ -29,7 +28,6 @@ export default function FormularioConfirmacao() {
         if (captchaContainer && (window as unknown as { hcaptcha?: { render: (el: Element, opts: object) => void; reset: () => void } }).hcaptcha) {
             const hcaptcha = (window as unknown as { hcaptcha: { render: (el: Element, opts: object) => void; reset: () => void } }).hcaptcha;
             try {
-                // Limpar container antes de re-renderizar
                 captchaContainer.innerHTML = '';
                 hcaptcha.render(captchaContainer, {
                     sitekey: process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY,
@@ -37,44 +35,32 @@ export default function FormularioConfirmacao() {
                     theme: document.documentElement.classList.contains("dark") ? "dark" : "light"
                 });
             } catch {
-                // Widget já renderizado, apenas resetar
                 hcaptcha.reset();
             }
         }
     };
 
     useEffect(() => {
-        // Track form started
         tracking.formStarted("confirmacao_interesse");
-        
-        // Resetar token ao montar
         setHcaptchaToken(null);
 
-        // Detectar tema atual e re-renderizar captcha
         const checkTheme = () => {
             setIsDarkMode(document.documentElement.classList.contains("dark"));
-            // Re-renderizar hCaptcha quando o tema mudar
             renderCaptcha();
         };
 
-        // Aplicar tema inicial
         setIsDarkMode(document.documentElement.classList.contains("dark"));
 
-        // Observer para mudanças no tema
         const observer = new MutationObserver(checkTheme);
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
-        // Callback global para hCaptcha
         window.onHcaptchaSuccess = (token: string) => setHcaptchaToken(token);
 
-        // Verificar se script já existe
         const existingScript = document.querySelector('script[src="https://hcaptcha.com/1/api.js"]');
 
         if (existingScript) {
-            // Script já carregado, re-renderizar captcha
             setTimeout(renderCaptcha, 100);
         } else {
-            // Carregar script pela primeira vez
             const script = document.createElement("script");
             script.src = "https://hcaptcha.com/1/api.js?render=explicit";
             script.async = true;
@@ -92,62 +78,73 @@ export default function FormularioConfirmacao() {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
         if (errors[name as keyof typeof errors]) setErrors(prev => ({ ...prev, [name]: undefined }));
-        
-        // Track field focus
+
         if (type !== "checkbox" && value.length === 1) {
             tracking.formFieldFocused(name, "confirmacao_interesse");
         }
     };
 
-    const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Máscara de telefone: (00) 00000-0000
+    const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let value = e.target.value.replace(/\D/g, "");
         if (value.length > 11) value = value.slice(0, 11);
-        value = value.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-        setFormData(prev => ({ ...prev, cpf: value }));
 
-        // Validar CPF em tempo real quando tiver 11 dígitos
-        const cpfLimpo = limparCPF(value);
-        if (cpfLimpo.length === 11) {
-            if (!validarCPF(cpfLimpo)) {
-                setErrors(prev => ({ ...prev, cpf: "CPF inválido. Verifique os números digitados." }));
-            } else {
-                setErrors(prev => ({ ...prev, cpf: undefined }));
-            }
+        // Formatar: (00) 00000-0000 ou (00) 0000-0000
+        if (value.length > 0) {
+            value = value.replace(/^(\d{2})(\d)/g, "($1) $2");
+            value = value.replace(/(\d{5})(\d)/, "$1-$2");
+        }
+
+        setFormData(prev => ({ ...prev, telefone: value }));
+
+        // Validar telefone
+        const telefoneLimpo = value.replace(/\D/g, "");
+        if (telefoneLimpo.length > 0 && telefoneLimpo.length < 10) {
+            setErrors(prev => ({ ...prev, telefone: "Telefone inválido" }));
         } else {
-            // Limpar erro se ainda está digitando
-            if (errors.cpf) setErrors(prev => ({ ...prev, cpf: undefined }));
+            setErrors(prev => ({ ...prev, telefone: undefined }));
         }
     };
 
     const validateForm = () => {
         const newErrors: typeof errors = {};
-        if (!formData.nome.trim() || formData.nome.trim().length < 3) newErrors.nome = "Nome inválido (mínimo 3 caracteres)";
 
-        // Validação completa de CPF com algoritmo verificador
-        const cpfLimpo = limparCPF(formData.cpf);
-        if (!validarCPF(cpfLimpo)) {
-            newErrors.cpf = "CPF inválido. Verifique os números digitados.";
+        if (!formData.nome.trim() || formData.nome.trim().length < 3) {
+            newErrors.nome = "Nome inválido (mínimo 3 caracteres)";
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) newErrors.email = "E-mail inválido";
-        if (!formData.aceitouTermos) newErrors.termos = "Você precisa aceitar os termos";
-        if (!hcaptchaToken) newErrors.geral = "Complete a verificação de segurança (captcha)";
+        if (!emailRegex.test(formData.email)) {
+            newErrors.email = "E-mail inválido";
+        }
+
+        const telefoneLimpo = formData.telefone.replace(/\D/g, "");
+        if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) {
+            newErrors.telefone = "Telefone inválido (DDD + número)";
+        }
+
+        if (!formData.aceitouTermos) {
+            newErrors.termos = "Você precisa aceitar os termos";
+        }
+
+        if (!hcaptchaToken) {
+            newErrors.geral = "Complete a verificação de segurança (captcha)";
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    // Verifica se todos os campos estão preenchidos corretamente para habilitar o botão
     const isFormValid = () => {
         const nomeValido = formData.nome.trim().length >= 3;
-        const cpfLimpo = limparCPF(formData.cpf);
-        const cpfValido = validarCPF(cpfLimpo);
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const emailValido = emailRegex.test(formData.email);
+        const telefoneLimpo = formData.telefone.replace(/\D/g, "");
+        const telefoneValido = telefoneLimpo.length >= 10 && telefoneLimpo.length <= 11;
         const termosAceitos = formData.aceitouTermos;
         const captchaFeito = !!hcaptchaToken;
 
-        return nomeValido && cpfValido && emailValido && termosAceitos && captchaFeito;
+        return nomeValido && emailValido && telefoneValido && termosAceitos && captchaFeito;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -159,35 +156,32 @@ export default function FormularioConfirmacao() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    ...formData,
+                    nome: formData.nome,
+                    email: formData.email,
+                    telefone: formData.telefone.replace(/\D/g, ""), // Envia só números
+                    aceitouTermos: formData.aceitouTermos,
                     hcaptchaToken,
                     campaign: campaign || process.env.NEXT_PUBLIC_CAMPAIGN_NAME || "direct"
                 }),
             });
             const data = await response.json();
             if (response.ok) {
-                // Track form submitted successfully
-                const cpfLimpo = limparCPF(formData.cpf);
                 tracking.formSubmitted("confirmacao_interesse", true, {
-                    cpf: cpfLimpo.substring(0, 3) + "***",
+                    email: formData.email.substring(0, 3) + "***",
                 });
-                
-                // Track consent given
-                tracking.consentGiven(cpfLimpo);
-                
-                // Passar o número do processo na URL (ou "nao-encontrado" se não houver)
+
+                tracking.consentGiven(formData.email);
+
                 const numeroProcesso = data.numero_processo || "nao-encontrado";
-                
-                // Track processo found/not found
+
                 if (numeroProcesso !== "nao-encontrado") {
-                    tracking.processoFound(cpfLimpo, numeroProcesso);
+                    tracking.processoFound(formData.email, numeroProcesso);
                 } else {
-                    tracking.processoNotFound(cpfLimpo);
+                    tracking.processoNotFound(formData.email);
                 }
-                
+
                 router.push(`/confirmacao?numero=${encodeURIComponent(numeroProcesso)}`);
             } else {
-                // Track form submission error
                 tracking.formSubmitted("confirmacao_interesse", false, {
                     error: data.error,
                 });
@@ -200,7 +194,6 @@ export default function FormularioConfirmacao() {
         }
     };
 
-    // Estilos de input - bordas douradas mais fortes no light mode
     const inputBaseClass = `w-full h-14 pl-12 pr-4 rounded-xl focus:ring-2 focus:outline-none transition-all
         bg-white dark:bg-dark-bgAlt 
         text-text-main dark:text-dark-textMain 
@@ -257,33 +250,6 @@ export default function FormularioConfirmacao() {
                     )}
                 </div>
 
-                {/* CPF */}
-                <div className="space-y-2">
-                    <ConteudoText
-                        chave="form.cpf.label"
-                        fallback="CPF"
-                        className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1"
-                        as="label"
-                    />
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span className="material-symbols-outlined text-primary-darker dark:text-dark-textMuted">id_card</span>
-                        </div>
-                        <input
-                            type="text"
-                            name="cpf"
-                            value={formData.cpf}
-                            onChange={handleCpfChange}
-                            maxLength={14}
-                            className={`${inputBaseClass} ${inputBorderClass(!!errors.cpf)}`}
-                            placeholder="000.000.000-00"
-                        />
-                    </div>
-                    {errors.cpf && (
-                        <p className="text-xs text-red-500 ml-1 mt-1">{errors.cpf}</p>
-                    )}
-                </div>
-
                 {/* Email */}
                 <div className="space-y-2">
                     <ConteudoText
@@ -310,7 +276,31 @@ export default function FormularioConfirmacao() {
                     )}
                 </div>
 
-                {/* hCaptcha - renderizado explicitamente */}
+                {/* Telefone */}
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1">
+                        Telefone / WhatsApp
+                    </label>
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span className="material-symbols-outlined text-primary-darker dark:text-dark-textMuted">phone</span>
+                        </div>
+                        <input
+                            type="tel"
+                            name="telefone"
+                            value={formData.telefone}
+                            onChange={handleTelefoneChange}
+                            maxLength={16}
+                            className={`${inputBaseClass} ${inputBorderClass(!!errors.telefone)}`}
+                            placeholder="(00) 00000-0000"
+                        />
+                    </div>
+                    {errors.telefone && (
+                        <p className="text-xs text-red-500 ml-1 mt-1">{errors.telefone}</p>
+                    )}
+                </div>
+
+                {/* hCaptcha */}
                 <div className="flex justify-start min-h-[78px]">
                     {process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY ? (
                         <div className="h-captcha"></div>
