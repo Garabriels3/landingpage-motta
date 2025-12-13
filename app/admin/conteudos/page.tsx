@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 // Tipos
 type ConteudoTexto = {
@@ -111,6 +112,7 @@ const PAGINAS_CONFIG: Record<string, { nome: string; icone: string }> = {
 };
 
 export default function AdminConteudosPage() {
+    const router = useRouter();
 
 
     // ============================================
@@ -454,7 +456,10 @@ export default function AdminConteudosPage() {
 
                 <div className="p-6 border-t border-white/5">
                     <button
-                        onClick={() => { /* Implement logout logic here if needed, or remove button */ }}
+                        onClick={async () => {
+                            await fetch("/api/admin/logout", { method: "POST" });
+                            router.push("/admin/login");
+                        }}
                         className="flex items-center gap-3 h-12 px-4 w-full rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
                     >
                         <span className="material-symbols-outlined">logout</span>
