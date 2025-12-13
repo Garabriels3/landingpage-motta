@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 
 // Forçar renderização dinâmica e ZERO cache
@@ -9,20 +10,25 @@ export const revalidate = 0;
  * Verificar autenticação admin
  */
 function verificarAuth(request: NextRequest): boolean {
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-        return false;
-    }
-
-    const token = authHeader.substring(7);
     const adminKey = process.env.ADMIN_SECRET_KEY;
-
     if (!adminKey) {
         console.error("ADMIN_SECRET_KEY não configurada");
         return false;
     }
 
-    return token === adminKey;
+    // 1. Cookie (Prioritário)
+    const cookieStore = cookies();
+    const cookieToken = cookieStore.get("admin_token")?.value;
+    if (cookieToken === adminKey) return true;
+
+    // 2. Header (Fallback)
+    const authHeader = request.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.substring(7);
+        if (token === adminKey) return true;
+    }
+
+    return false;
 }
 
 /**

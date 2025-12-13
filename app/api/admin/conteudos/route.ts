@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 // Forçar renderização dinâmica
@@ -156,7 +157,7 @@ async function registrarAuditLog(
 }
 
 /**
- * Verificar autenticação admin com rate limiting
+ * Verificar Autenticação + Rate Limit
  */
 async function verificarAuthComRateLimit(
     request: NextRequest,
@@ -170,80 +171,64 @@ async function verificarAuthComRateLimit(
 }> {
     const ip = getClientIP(request);
     const userAgent = getUserAgent(request);
-    const authHeader = request.headers.get("authorization");
     const adminSecret = process.env.ADMIN_SECRET_KEY;
 
-    // Verificar se admin secret está configurado
     if (!adminSecret) {
         return {
             autorizado: false,
-            erro: "Configuração de admin ausente",
-            status: 503,
+            erro: "Erro de configuração do servidor",
+            status: 500,
             ip,
             userAgent
         };
     }
 
-    // Verificar rate limit antes de validar senha
+    // 1. Tentar Autenticação via Cookie (Prioritário)
+    const cookieStore = cookies();
+    const cookieToken = cookieStore.get("admin_token")?.value;
+
+    if (cookieToken === adminSecret) {
+        // Login bem-sucedido - resetar rate limit
+        await resetarRateLimitAdmin(supabase, ip);
+        await registrarAuditLog(supabase, "LOGIN_SUCCESS", ip, userAgent);
+        return { autorizado: true, ip, userAgent };
+    }
+
+    // 2. Tentar Autenticação via Header (Legado/Fallback)
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.split(" ")[1];
+
+    if (token === adminSecret) {
+        // Login bem-sucedido - resetar rate limit
+        await resetarRateLimitAdmin(supabase, ip);
+        await registrarAuditLog(supabase, "LOGIN_SUCCESS", ip, userAgent);
+        return { autorizado: true, ip, userAgent };
+    }
+
+    // 3. Se falhar, aplicar Rate Limit (apenas para tentativas inválidas)
     const { permitido, tentativasRestantes } = await verificarRateLimitAdmin(supabase, ip);
 
     if (!permitido) {
-        // Registrar tentativa bloqueada
-        await registrarAuditLog(
-            supabase,
-            "LOGIN_BLOCKED",
-            ip,
-            userAgent,
-            undefined,
-            undefined,
-            undefined,
-            { motivo: "Rate limit excedido" }
-        );
-
+        await registrarAuditLog(supabase, "LOGIN_BLOCKED", ip, userAgent, undefined, undefined, undefined, { tentativasRestantes });
         return {
             autorizado: false,
-            erro: `Muitas tentativas. Aguarde 15 minutos. (IP: ${ip.substring(0, 8)}...)`,
+            erro: "Muitas tentativas. Tente novamente em 15 minutos.",
             status: 429,
             ip,
             userAgent
         };
     }
 
-    // Verificar credenciais
-    const expectedAuth = `Bearer ${adminSecret}`;
-    const credenciaisCorretas = authHeader === expectedAuth;
+    // Falha de autenticação
+    await registrarAuditLog(supabase, "LOGIN_FAILED", ip, userAgent, undefined, undefined, undefined, { tentativasRestantes });
 
-    if (!credenciaisCorretas) {
-        // Registrar tentativa falha
-        await registrarAuditLog(
-            supabase,
-            "LOGIN_FAILED",
-            ip,
-            userAgent,
-            undefined,
-            undefined,
-            undefined,
-            { tentativasRestantes }
-        );
-
-        return {
-            autorizado: false,
-            erro: tentativasRestantes > 0
-                ? `Senha incorreta. Tentativas restantes: ${tentativasRestantes}`
-                : "Senha incorreta. Última tentativa!",
-            status: 401,
-            ip,
-            userAgent
-        };
-    }
-
-    // Login bem-sucedido - resetar rate limit
-    await resetarRateLimitAdmin(supabase, ip);
-
-    // Registrar login bem-sucedido (apenas uma vez por sessão seria ideal, mas simplificando)
-    // Comentado para não poluir logs: await registrarAuditLog(supabase, "LOGIN_SUCCESS", ip, userAgent);
-
-    return { autorizado: true, ip, userAgent };
+    return {
+        autorizado: false,
+        erro: "Não autorizado",
+        status: 401,
+        ip,
+        userAgent
+    };
 }
 
 /**

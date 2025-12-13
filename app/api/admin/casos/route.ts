@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { listarCasosAdmin } from "@/lib/supabase";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
     try {
-        // Verificar Autenticação (Bearer Token simplificado)
+        // Verificar Autenticação (Cookie ou Bearer)
+        const adminSecret = process.env.ADMIN_SECRET_KEY;
+        const cookieStore = cookies();
+        const cookieToken = cookieStore.get("admin_token")?.value;
         const authHeader = request.headers.get("authorization");
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        const headerToken = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
 
-        const token = authHeader.split(" ")[1];
-        // Validação simples de senha env (mesma do resto do admin)
-        if (token !== process.env.ADMIN_SECRET_KEY) {
-            return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+        if (cookieToken !== adminSecret && headerToken !== adminSecret) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const searchParams = request.nextUrl.searchParams;

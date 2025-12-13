@@ -111,18 +111,11 @@ const PAGINAS_CONFIG: Record<string, { nome: string; icone: string }> = {
 };
 
 export default function AdminConteudosPage() {
-    // ============================================
-    // CONSTANTES DE SEGURANÇA
-    // ============================================
-    const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutos
+
 
     // ============================================
     // ESTADOS
     // ============================================
-    const [autenticado, setAutenticado] = useState(false);
-    const [verificandoAuth, setVerificandoAuth] = useState(true);
-    const [senha, setSenha] = useState("");
-    const [erro, setErro] = useState("");
     const [activeTab, setActiveTab] = useState<"textos" | "cadastros" | "casos">("textos");
 
     // Estados - Conteúdos
@@ -156,101 +149,38 @@ export default function AdminConteudosPage() {
     const [filtroDataInicio, setFiltroDataInicio] = useState('');
     const [filtroDataFim, setFiltroDataFim] = useState('');
 
-    // ============================================
-    // FUNÇÕES DE SESSÃO SEGURA
-    // ============================================
-    const getSecureSession = () => {
-        try {
-            const sessionData = sessionStorage.getItem("admin_session");
-            if (!sessionData) return null;
 
-            const session = JSON.parse(sessionData);
-            const now = Date.now();
-
-            // Verificar expiração (30 minutos)
-            if (now - session.timestamp > SESSION_TIMEOUT_MS) {
-                sessionStorage.removeItem("admin_session");
-                return null;
-            }
-
-            return session.token;
-        } catch {
-            sessionStorage.removeItem("admin_session");
-            return null;
-        }
-    };
-
-    const setSecureSession = (token: string) => {
-        const sessionData = {
-            token,
-            timestamp: Date.now()
-        };
-        sessionStorage.setItem("admin_session", JSON.stringify(sessionData));
-        // Migra localStorage antigo se existir
-        localStorage.removeItem("admin_token");
-    };
-
-    const clearSecureSession = () => {
-        sessionStorage.removeItem("admin_session");
-        localStorage.removeItem("admin_token");
-    };
-
-    const refreshSessionTimestamp = () => {
-        const token = getSecureSession();
-        if (token) {
-            setSecureSession(token);
-        }
-    };
 
     // ============================================
-    // EFEITOS (USE EFFECT)
+    // EFEITOS
     // ============================================
+
+    // Carregar dados iniciais
     useEffect(() => {
-        // Migra sessão antiga do localStorage se existir
-        const oldToken = localStorage.getItem("admin_token");
-        if (oldToken) {
-            setSecureSession(oldToken);
-        }
-
-        const token = getSecureSession();
-        if (token) {
-            verificarToken(token);
-        } else {
-            setVerificandoAuth(false);
-        }
+        carregarConteudos();
     }, []);
 
-    // Carregar dados ao trocar de aba se autenticado
+    // Carregar dados ao trocar de aba
     useEffect(() => {
-        if (autenticado) {
-            const token = getSecureSession();
-            if (token) {
-                refreshSessionTimestamp(); // Renova sessão a cada ação
-                if (activeTab === "cadastros") {
-                    carregarConsentimentos(token);
-                } else if (activeTab === "casos") {
-                    carregarCasos(token);
-                }
-            }
+        if (activeTab === "cadastros") {
+            carregarConsentimentos();
+        } else if (activeTab === "casos") {
+            carregarCasos();
         }
-    }, [activeTab, autenticado]);
+    }, [activeTab]);
 
     // Recarregar conteúdos quando filtro de página muda
     useEffect(() => {
-        if (autenticado && activeTab === "textos") {
-            const token = getSecureSession();
-            if (token) carregarConteudos(token);
+        if (activeTab === "textos") {
+            carregarConteudos();
         }
     }, [filtroPagina]);
 
     // Recarregar casos quando filtros mudam
     useEffect(() => {
-        if (autenticado && activeTab === "casos") {
-            const token = getSecureSession();
-            if (token) {
-                setPaginaCasos(0);
-                carregarCasos(token, 0, buscaCasos);
-            }
+        if (activeTab === "casos") {
+            setPaginaCasos(0);
+            carregarCasos(0, buscaCasos);
         }
     }, [filtroAdvogado, filtroDataInicio, filtroDataFim]);
 
@@ -258,52 +188,8 @@ export default function AdminConteudosPage() {
     // FUNÇÕES AUXILIARES
     // ============================================
 
-    // AUTH
-    const verificarToken = async (token: string) => {
-        try {
-            const response = await fetch("/api/admin/conteudos?limit=1", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (response.ok) {
-                setAutenticado(true);
-                carregarConteudos(token);
-            } else {
-                clearSecureSession();
-            }
-        } catch {
-            clearSecureSession();
-        } finally {
-            setVerificandoAuth(false);
-        }
-    };
-
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setErro("");
-        try {
-            const response = await fetch("/api/admin/conteudos?limit=1", {
-                headers: { Authorization: `Bearer ${senha}` },
-            });
-            if (response.ok) {
-                setSecureSession(senha);
-                setAutenticado(true);
-                carregarConteudos(senha);
-            } else {
-                setErro("Senha incorreta");
-            }
-        } catch {
-            setErro("Erro ao conectar com o servidor");
-        }
-    };
-
-    const handleLogout = () => {
-        clearSecureSession();
-        setAutenticado(false);
-        setSenha("");
-    };
-
     // CONTEÚDOS (TEXTOS)
-    const carregarConteudos = async (token: string) => {
+    const carregarConteudos = async () => {
         setCarregando(true);
         try {
             const url = filtroPagina !== "all"
@@ -311,7 +197,6 @@ export default function AdminConteudosPage() {
                 : "/api/admin/conteudos";
 
             const response = await fetch(url, {
-                headers: { Authorization: `Bearer ${token}` },
                 cache: 'no-store',
             });
 
@@ -336,9 +221,6 @@ export default function AdminConteudosPage() {
     };
 
     const salvarAlteracoes = async () => {
-        const token = getSecureSession();
-        if (!token) return;
-
         setSalvando(true);
         try {
             const updates = Object.entries(alteracoesPendentes).map(async ([chave, texto]) => {
@@ -347,7 +229,6 @@ export default function AdminConteudosPage() {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`
                     },
                     body: JSON.stringify({ chave, texto })
                 });
@@ -357,7 +238,7 @@ export default function AdminConteudosPage() {
             await Promise.all(updates);
 
             // Recarrega tudo
-            await carregarConteudos(token);
+            await carregarConteudos();
             alert("Alterações salvas com sucesso!");
         } catch (error) {
             console.error(error);
@@ -374,7 +255,7 @@ export default function AdminConteudosPage() {
     };
 
     // CADASTROS / CONSENTIMENTOS
-    const carregarConsentimentos = async (token: string, page = 0, search = '') => {
+    const carregarConsentimentos = async (page = 0, search = '') => {
         setCarregandoConsentimentos(true);
         try {
             const params = new URLSearchParams();
@@ -383,7 +264,6 @@ export default function AdminConteudosPage() {
             if (search) params.append("q", search);
 
             const response = await fetch(`/api/admin/consentimentos?${params.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` },
                 cache: 'no-store',
             });
             if (response.ok) {
@@ -404,7 +284,7 @@ export default function AdminConteudosPage() {
     };
 
     // CASOS
-    const carregarCasos = async (token: string, page = 0, search = '') => {
+    const carregarCasos = async (page = 0, search = '') => {
         setCarregandoCasos(true);
         try {
             const params = new URLSearchParams();
@@ -418,7 +298,6 @@ export default function AdminConteudosPage() {
             if (filtroDataFim) params.append("data_fim", filtroDataFim);
 
             const response = await fetch(`/api/admin/casos?${params.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` },
                 cache: 'no-store',
             });
 
@@ -437,37 +316,33 @@ export default function AdminConteudosPage() {
 
     const handleBuscaCasos = (e: React.FormEvent) => {
         e.preventDefault();
-        const token = getSecureSession();
         setPaginaCasos(0); // Reset to first page on search
-        if (token) carregarCasos(token, 0, buscaCasos);
+        carregarCasos(0, buscaCasos);
     };
 
     const handleBuscaConsentimentos = (e: React.FormEvent) => {
         e.preventDefault();
-        const token = getSecureSession();
         setPaginaConsentimentos(0);
-        if (token) carregarConsentimentos(token, 0, buscaConsentimentos);
+        carregarConsentimentos(0, buscaConsentimentos);
     };
 
     // Funções de paginação para Casos
     const totalPaginasCasos = Math.ceil(totalCasos / 50);
     const irParaPaginaCasos = (page: number) => {
-        const token = getSecureSession();
-        if (token && page >= 0 && page < totalPaginasCasos) {
+        if (page >= 0 && page < totalPaginasCasos) {
             setPaginaCasos(page);
             setCasoSelecionado(null);
-            carregarCasos(token, page, buscaCasos);
+            carregarCasos(page, buscaCasos);
         }
     };
 
     // Funções de paginação para Consentimentos
     const totalPaginasConsentimentos = Math.ceil(totalConsentimentos / 50);
     const irParaPaginaConsentimentos = (page: number) => {
-        const token = getSecureSession();
-        if (token && page >= 0 && page < totalPaginasConsentimentos) {
+        if (page >= 0 && page < totalPaginasConsentimentos) {
             setPaginaConsentimentos(page);
             setConsentimentoSelecionado(null);
-            carregarConsentimentos(token, page, buscaConsentimentos);
+            carregarConsentimentos(page, buscaConsentimentos);
         }
     };
 
@@ -496,58 +371,7 @@ export default function AdminConteudosPage() {
     // ============================================
     // RENDER: LOGIN SCREEN
     // ============================================
-    if (!autenticado) {
-        if (verificandoAuth) {
-            return (
-                <div className="min-h-screen bg-[#1e1a14] flex items-center justify-center">
-                    <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-                </div>
-            );
-        }
 
-        return (
-            <div className="min-h-screen bg-[#1e1a14] flex items-center justify-center p-4">
-                <div className="w-full max-w-md bg-[#2a261f] rounded-2xl border border-white/10 p-8 shadow-2xl">
-                    <div className="text-center mb-8">
-                        <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary-dark rounded-full mx-auto flex items-center justify-center shadow-lg mb-4">
-                            <span className="text-black text-2xl font-bold">W</span>
-                        </div>
-                        <h1 className="text-2xl font-bold text-white mb-2">Acesso Administrativo</h1>
-                        <p className="text-gray-400">Entre com sua credencial para continuar</p>
-                    </div>
-
-                    <form onSubmit={handleLogin} className="space-y-4">
-                        <div>
-                            <input
-                                type="password"
-                                value={senha}
-                                onChange={(e) => setSenha(e.target.value)}
-                                placeholder="Senha de acesso"
-                                className="w-full bg-[#1e1a14] border border-white/10 rounded-lg h-12 px-4 text-white placeholder-gray-600 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all"
-                            />
-                        </div>
-
-                        {erro && (
-                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-500 text-sm text-center">
-                                {erro}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            className="w-full h-12 bg-primary hover:bg-primary-dark text-black font-bold rounded-lg transition-colors"
-                        >
-                            Entrar no Painel
-                        </button>
-                    </form>
-
-                    <p className="text-center text-gray-600 text-xs mt-6">
-                        Acesso restrito a administradores autorizados.
-                    </p>
-                </div>
-            </div>
-        );
-    }
 
     // ============================================
     // RENDER: PAINEL ADMIN MAIN
@@ -630,7 +454,7 @@ export default function AdminConteudosPage() {
 
                 <div className="p-6 border-t border-white/5">
                     <button
-                        onClick={handleLogout}
+                        onClick={() => { /* Implement logout logic here if needed, or remove button */ }}
                         className="flex items-center gap-3 h-12 px-4 w-full rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
                     >
                         <span className="material-symbols-outlined">logout</span>
@@ -683,8 +507,7 @@ export default function AdminConteudosPage() {
 
                                         <button
                                             onClick={() => {
-                                                const token = getSecureSession();
-                                                if (token) carregarCasos(token, paginaCasos, buscaCasos);
+                                                carregarCasos(paginaCasos, buscaCasos);
                                             }}
                                             className="flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-[#2a261f] border border-white/10 text-gray-300 hover:text-white hover:border-primary/50 text-sm font-medium transition-colors"
                                         >
@@ -1495,8 +1318,7 @@ export default function AdminConteudosPage() {
                                         </div>
                                         <button
                                             onClick={() => {
-                                                const token = getSecureSession();
-                                                if (token) carregarConsentimentos(token, paginaConsentimentos, buscaConsentimentos);
+                                                carregarConsentimentos(paginaConsentimentos, buscaConsentimentos);
                                             }}
                                             className="flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-[#2a261f] border border-white/10 text-gray-300 hover:text-white hover:border-primary/50 text-sm font-medium transition-colors"
                                         >
