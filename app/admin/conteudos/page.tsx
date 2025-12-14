@@ -17,6 +17,7 @@ type Consentimento = {
     id: string;
     nome_fornecido: string;
     email_fornecido: string;
+    telefone?: string;
     cpf: string;
     aceitou_termos: boolean;
     source_campaign: string;
@@ -135,6 +136,11 @@ export default function AdminConteudosPage() {
     const [consentimentoSelecionado, setConsentimentoSelecionado] = useState<Consentimento | null>(null);
     const [paginaConsentimentos, setPaginaConsentimentos] = useState(0);
 
+    // Estados - Filtros Cadastros
+    const [filtroDataInicioCad, setFiltroDataInicioCad] = useState('');
+    const [filtroDataFimCad, setFiltroDataFimCad] = useState('');
+    const [filtroCampaignCad, setFiltroCampaignCad] = useState('');
+
     // Estado para controle do menu mobile
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -186,6 +192,14 @@ export default function AdminConteudosPage() {
             carregarCasos(0, buscaCasos);
         }
     }, [filtroAdvogado, filtroConsentimento, filtroTipoPessoa, filtroDataInicio, filtroDataFim]);
+
+    // Recarregar consentimentos quando filtros mudam
+    useEffect(() => {
+        if (activeTab === "cadastros") {
+            setPaginaConsentimentos(0);
+            carregarConsentimentos(0, buscaConsentimentos);
+        }
+    }, [filtroDataInicioCad, filtroDataFimCad, filtroCampaignCad]);
 
     // ============================================
     // FUNÇÕES AUXILIARES
@@ -266,6 +280,11 @@ export default function AdminConteudosPage() {
             params.append("limit", "50");
             if (search) params.append("q", search);
 
+            // Filtros Cadastros
+            if (filtroDataInicioCad) params.append("dataInicio", filtroDataInicioCad);
+            if (filtroDataFimCad) params.append("dataFim", filtroDataFimCad);
+            if (filtroCampaignCad) params.append("campaign", filtroCampaignCad);
+
             const response = await fetch(`/api/admin/consentimentos?${params.toString()}`, {
                 cache: 'no-store',
             });
@@ -281,9 +300,16 @@ export default function AdminConteudosPage() {
         }
     };
 
-    const mascararCPF = (cpf: string) => {
-        if (!cpf) return "—";
-        return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.***-$4");
+    const mascararCPF = (valor: string) => {
+        if (!valor) return "—";
+        const limpo = valor.replace(/\D/g, "");
+        if (limpo.length === 11) {
+            return limpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.***-$4");
+        }
+        if (limpo.length === 14) {
+            return limpo.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.***.***/$4-$5");
+        }
+        return valor;
     };
 
     // CASOS
@@ -624,8 +650,8 @@ export default function AdminConteudosPage() {
                                             <div className="bg-[#2a261f] rounded-xl border border-white/5 overflow-hidden">
                                                 <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-[#1e1a14] border-b border-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider">
                                                     <div className="col-span-1 text-center">Status</div>
-                                                    <div className="col-span-4">Réu / Nome</div>
-                                                    <div className="col-span-4">Email</div>
+                                                    <div className="col-span-5">Réu / Nome</div>
+                                                    <div className="col-span-3">Email</div>
                                                     <div className="col-span-3 text-right">Processo</div>
                                                 </div>
 
@@ -649,7 +675,7 @@ export default function AdminConteudosPage() {
                                                                             <span className="material-symbols-outlined text-gray-600" title="Aguardando Cadastro">pending</span>
                                                                         )}
                                                                     </div>
-                                                                    <div className="flex-1 md:col-span-4 min-w-0">
+                                                                    <div className="flex-1 md:col-span-5 min-w-0">
                                                                         <div className="text-white font-medium truncate" title={caso.REU}>{caso.REU}</div>
                                                                         {/* Mobile Only Extra Info */}
                                                                         <div className="md:hidden text-xs text-primary font-mono mt-0.5">{caso.NUMERO_PROCESSO}</div>
@@ -657,7 +683,7 @@ export default function AdminConteudosPage() {
                                                                 </div>
 
                                                                 {/* Desktop Columns / Mobile Bottom Row */}
-                                                                <div className="md:col-span-4 pl-9 md:pl-0">
+                                                                <div className="md:col-span-3 pl-9 md:pl-0">
                                                                     <div className="text-gray-400 text-sm truncate" title={caso.EMAIL}>{caso.EMAIL || (
                                                                         <span className="text-gray-600 italic text-xs">Sem email</span>
                                                                     )}</div>
@@ -1321,11 +1347,14 @@ export default function AdminConteudosPage() {
                 {/* ========================================
                     ABA: CADASTROS / CONSENTIMENTOS
                     ======================================== */}
+                {/* ========================================
+                    ABA: CADASTROS / CONSENTIMENTOS
+                    ======================================== */}
                 {activeTab === "cadastros" && (
                     <>
                         {/* Top Header */}
                         <header className="w-full bg-[#1e1a14]/95 backdrop-blur-sm border-b border-white/5 z-10 sticky top-0">
-                            <div className="max-w-5xl mx-auto px-6 py-6 w-full">
+                            <div className="max-w-6xl mx-auto px-6 py-6 w-full">
                                 <div className="flex flex-wrap items-center justify-between gap-4">
                                     <div className="flex items-center gap-4">
                                         <button
@@ -1343,19 +1372,51 @@ export default function AdminConteudosPage() {
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-[#2a261f] border border-white/10 rounded-lg px-4 py-2">
-                                            <span className="text-gray-400 text-sm">Total: </span>
-                                            <span className="text-primary font-bold">{totalConsentimentos}</span>
+
+                                    {/* Toolbar de Filtros */}
+                                    <div className="flex items-center gap-2 flex-wrap">
+
+                                        {/* Filtro Campanha */}
+                                        <div className="relative group">
+                                            <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                                                <span className="material-symbols-outlined text-gray-500 text-[18px]">campaign</span>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                placeholder="Origem..."
+                                                value={filtroCampaignCad}
+                                                onChange={(e) => setFiltroCampaignCad(e.target.value)}
+                                                className="bg-[#1e1a14] border border-white/10 rounded-lg h-9 pl-8 pr-3 text-sm text-white placeholder-gray-600 focus:border-primary focus:outline-none w-28 transition-all focus:w-40"
+                                            />
                                         </div>
+
+                                        <div className="h-6 w-px bg-white/10 mx-1 hidden md:block"></div>
+
+                                        {/* Filtro Data */}
+                                        <div className="flex items-center gap-1 bg-[#2a261f] border border-white/10 rounded-lg p-0.5">
+                                            <input
+                                                type="date"
+                                                value={filtroDataInicioCad}
+                                                onChange={(e) => setFiltroDataInicioCad(e.target.value)}
+                                                className="bg-transparent text-white text-xs px-2 h-8 focus:outline-none w-28"
+                                            />
+                                            <span className="text-gray-600">—</span>
+                                            <input
+                                                type="date"
+                                                value={filtroDataFimCad}
+                                                onChange={(e) => setFiltroDataFimCad(e.target.value)}
+                                                className="bg-transparent text-white text-xs px-2 h-8 focus:outline-none w-28"
+                                            />
+                                        </div>
+
                                         <button
                                             onClick={() => {
                                                 carregarConsentimentos(paginaConsentimentos, buscaConsentimentos);
                                             }}
-                                            className="flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-[#2a261f] border border-white/10 text-gray-300 hover:text-white hover:border-primary/50 text-sm font-medium transition-colors"
+                                            className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-black transition-colors ml-2"
+                                            title="Atualizar Lista"
                                         >
-                                            <span className="material-symbols-outlined text-[18px]">refresh</span>
-                                            Atualizar
+                                            <span className="material-symbols-outlined text-[20px]">refresh</span>
                                         </button>
                                     </div>
                                 </div>
@@ -1364,7 +1425,7 @@ export default function AdminConteudosPage() {
 
                         {/* Scrollable Content - Cadastros */}
                         <div className="flex-1 overflow-y-auto p-6" style={{ scrollbarWidth: 'thin', scrollbarColor: '#332d25 #1e1a14' }}>
-                            <div className="max-w-5xl mx-auto w-full pb-20">
+                            <div className="max-w-6xl mx-auto w-full pb-20">
                                 {carregandoConsentimentos ? (
                                     <div className="flex items-center justify-center py-20">
                                         <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -1373,17 +1434,18 @@ export default function AdminConteudosPage() {
                                     <div className="bg-[#2a261f] rounded-xl border border-white/5 p-12 text-center">
                                         <span className="material-symbols-outlined text-gray-600 text-5xl mb-4">person_off</span>
                                         <p className="text-gray-400">Nenhum cadastro recebido ainda.</p>
-                                        <p className="text-gray-600 text-sm mt-2">Os cadastros aparecerão aqui quando as pessoas preencherem o formulário.</p>
+                                        <p className="text-gray-600 text-sm mt-2">Tente limpar os filtros ou aguarde novos cadastros.</p>
                                     </div>
                                 ) : (
                                     <div className="bg-[#2a261f] rounded-xl border border-white/5 overflow-hidden">
                                         {/* Table Header */}
                                         <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-[#1e1a14] border-b border-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider">
                                             <div className="col-span-3">Nome</div>
-                                            <div className="col-span-2">CPF</div>
-                                            <div className="col-span-3">Email</div>
-                                            <div className="col-span-2">Campanha</div>
-                                            <div className="col-span-2">Data</div>
+                                            <div className="col-span-2">CPF/CNPJ</div>
+                                            <div className="col-span-3">Contato</div>
+                                            <div className="col-span-1">Origem</div>
+                                            <div className="col-span-1">Data</div>
+                                            <div className="col-span-2 text-right">Ações</div>
                                         </div>
 
                                         {/* Table Body */}
@@ -1391,62 +1453,130 @@ export default function AdminConteudosPage() {
                                             {consentimentos.map((c) => (
                                                 <div
                                                     key={c.id}
-                                                    className="flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 px-6 py-4 hover:bg-white/5 transition-colors border-b border-white/5 md:border-b-0"
+                                                    className="flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 px-6 py-4 hover:bg-white/5 transition-colors border-b border-white/5 md:border-b-0 items-center"
                                                 >
-                                                    {/* Mobile Top Row: Name + Campaign + Date */}
-                                                    <div className="md:col-span-3 flex items-center gap-3">
+                                                    {/* Nome */}
+                                                    <div className="md:col-span-3 flex items-center gap-3 w-full">
                                                         <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                                                             <span className="text-primary text-sm font-bold">
                                                                 {c.nome_fornecido?.charAt(0)?.toUpperCase() || "?"}
                                                             </span>
                                                         </div>
-                                                        <div className="flex flex-col min-w-0 md:block">
+                                                        <div className="flex flex-col min-w-0">
                                                             <span className="text-white font-medium truncate">
                                                                 {c.nome_fornecido || "—"}
                                                             </span>
                                                             {/* Mobile Subtitle */}
                                                             <div className="md:hidden flex items-center gap-2 mt-0.5">
-                                                                <span className="text-xs text-primary/80">
-                                                                    {c.source_campaign || "direct"}
-                                                                </span>
-                                                                <span className="text-[10px] text-white/20">•</span>
                                                                 <span className="text-xs text-gray-500">
-                                                                    {new Date(c.created_at).toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit' })}
+                                                                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    {/* Data Columns (Desktop) / Second Row (Mobile) */}
-                                                    <div className="pl-11 md:pl-0 md:contents">
-                                                        <div className="md:col-span-2 flex items-center">
-                                                            <span className="text-gray-400 font-mono text-sm">
-                                                                {mascararCPF(c.cpf)}
-                                                            </span>
+                                                    {/* CPF */}
+                                                    <div className="md:col-span-2 w-full flex items-center justify-between md:justify-start">
+                                                        <span className="md:hidden text-xs text-gray-500 uppercase font-bold">Documento:</span>
+                                                        <span className="text-gray-400 font-mono text-sm bg-black/20 px-1.5 py-0.5 rounded">
+                                                            {mascararCPF(c.cpf)}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Contato (Email + Telefone) */}
+                                                    <div className="md:col-span-3 w-full">
+                                                        <div className="flex flex-col gap-1">
+                                                            {c.email_fornecido && (
+                                                                <div className="flex items-center gap-2 group cursor-pointer" onClick={() => navigator.clipboard.writeText(c.email_fornecido)} title="Clique para copiar">
+                                                                    <span className="material-symbols-outlined text-[14px] text-gray-500 group-hover:text-primary">mail</span>
+                                                                    <span className="text-gray-400 text-sm truncate group-hover:text-white transition-colors">{c.email_fornecido}</span>
+                                                                </div>
+                                                            )}
+                                                            {c.telefone && (
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="material-symbols-outlined text-[14px] text-gray-500">call</span>
+                                                                    <span className="text-gray-400 text-sm">{c.telefone}</span>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        <div className="md:col-span-3 flex items-center">
-                                                            <span className="text-gray-400 text-sm truncate">
-                                                                {c.email_fornecido || "—"}
-                                                            </span>
-                                                        </div>
-                                                        <div className="hidden md:flex md:col-span-2 items-center">
-                                                            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                                                {c.source_campaign || "direct"}
-                                                            </span>
-                                                        </div>
-                                                        <div className="hidden md:flex md:col-span-2 items-center">
-                                                            <span className="text-gray-500 text-sm">
-                                                                {new Date(c.created_at).toLocaleDateString("pt-BR", {
-                                                                    day: "2-digit",
-                                                                    month: "short",
-                                                                    hour: "2-digit",
-                                                                    minute: "2-digit"
-                                                                })}
-                                                            </span>
-                                                        </div>
+                                                    </div>
+
+                                                    {/* Origem */}
+                                                    <div className="md:col-span-1 w-full flex items-center justify-between md:justify-start">
+                                                        <span className="md:hidden text-xs text-gray-500 uppercase font-bold">Origem:</span>
+                                                        <span className="text-xs font-semibold px-2 py-1 rounded bg-[#1e1a14] border border-white/10 text-gray-300">
+                                                            {c.source_campaign || "orgânico"}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Data */}
+                                                    <div className="hidden md:flex md:col-span-1 items-center">
+                                                        <span className="text-gray-500 text-sm">
+                                                            {new Date(c.created_at).toLocaleDateString("pt-BR", {
+                                                                day: "2-digit",
+                                                                month: "2-digit"
+                                                            })}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Ações */}
+                                                    <div className="md:col-span-2 w-full flex items-center justify-end gap-2 mt-2 md:mt-0 pt-2 md:pt-0 border-t border-white/5 md:border-0 h-full">
+
+                                                        {c.telefone ? (
+                                                            <a
+                                                                href={`https://wa.me/55${c.telefone.replace(/\D/g, '')}?text=Olá ${c.nome_fornecido}, tudo bem?`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex-1 md:flex-none h-8 px-3 bg-green-600 hover:bg-green-500 text-white rounded-lg flex items-center justify-center gap-2 text-xs font-bold transition-all"
+                                                            >
+                                                                <span className="material-symbols-outlined text-[16px]">chat</span>
+                                                                WhatsApp
+                                                            </a>
+                                                        ) : (
+                                                            <button disabled className="flex-1 md:flex-none h-8 px-3 bg-white/5 text-gray-600 rounded-lg flex items-center justify-center gap-2 text-xs cursor-not-allowed">
+                                                                <span className="material-symbols-outlined text-[16px]">chat_off</span>
+                                                                WhatsApp
+                                                            </button>
+                                                        )}
+
+                                                        <button
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(`${c.nome_fornecido}\n${c.email_fornecido}\n${c.cpf}`);
+                                                                alert("Dados copiados!");
+                                                            }}
+                                                            className="w-8 h-8 rounded-lg bg-[#1e1a14] border border-white/10 hover:border-primary/50 text-gray-400 hover:text-white flex items-center justify-center transition-colors"
+                                                            title="Copiar Dados"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[16px]">content_copy</span>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             ))}
+                                        </div>
+                                        {/* Paginação */}
+                                        <div className="px-6 py-4 border-t border-white/5 bg-[#1e1a14]/50 flex items-center justify-between">
+                                            <div className="text-xs text-gray-500">
+                                                Mostrando {consentimentos.length} de {totalConsentimentos} resultados
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => irParaPaginaConsentimentos(paginaConsentimentos - 1)}
+                                                    disabled={paginaConsentimentos === 0}
+                                                    className="h-8 px-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                                >
+                                                    ← Anterior
+                                                </button>
+                                                <span className="text-xs text-gray-400 px-2">
+                                                    Página {paginaConsentimentos + 1}
+                                                </span>
+                                                <button
+                                                    onClick={() => irParaPaginaConsentimentos(paginaConsentimentos + 1)}
+                                                    disabled={consentimentos.length < 50} // Simple check
+                                                    className="h-8 px-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                                >
+                                                    Próxima →
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 )}

@@ -71,31 +71,46 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        // Buscar parâmetros de paginação
+        // Buscar parâmetros de paginação e filtros
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get("page") || "1");
         const limit = parseInt(searchParams.get("limit") || "50");
         const offset = (page - 1) * limit;
 
-        console.log(`[CONSENTIMENTOS] Buscando página ${page}, timestamp: ${Date.now()}`);
+        const dataInicio = searchParams.get("dataInicio");
+        const dataFim = searchParams.get("dataFim");
+        const campaign = searchParams.get("campaign");
 
-        // Buscar total de registros (FRESH)
-        const { count: total, error: countError } = await supabase
+        console.log(`[CONSENTIMENTOS] Page ${page}, Inicio: ${dataInicio}, Fim: ${dataFim}, Campaign: ${campaign}`);
+
+        // Query Base
+        let query = supabase
             .from("consentimentos")
-            .select("*", { count: "exact", head: true });
+            .select("id, cpf, nome_fornecido, email_fornecido, telefone, aceitou_termos, ip, source_campaign, created_at", { count: "exact" });
 
-        if (countError) {
-            console.error("Erro ao contar consentimentos:", countError);
+        // Filtros
+        if (dataInicio) {
+            const start = new Date(dataInicio);
+            start.setHours(0, 0, 0, 0);
+            query = query.gte("created_at", start.toISOString());
         }
 
-        console.log(`[CONSENTIMENTOS] Total no banco: ${total}`);
+        if (dataFim) {
+            const end = new Date(dataFim);
+            end.setHours(23, 59, 59, 999);
+            query = query.lte("created_at", end.toISOString());
+        }
 
-        // Buscar consentimentos com paginação (FRESH)
-        const { data, error } = await supabase
-            .from("consentimentos")
-            .select("id, cpf, nome_fornecido, email_fornecido, aceitou_termos, ip, source_campaign, created_at")
+        if (campaign && campaign !== 'todos') {
+            query = query.ilike("source_campaign", `%${campaign}%`);
+        }
+
+        // Executar query com paginação
+        const { data, error, count } = await query
             .order("created_at", { ascending: false })
             .range(offset, offset + limit - 1);
+
+        const total = count || 0;
 
         if (error) {
             console.error("Erro ao buscar consentimentos:", error);
