@@ -271,6 +271,41 @@ export async function buscarCasoPorEmail(email: string): Promise<Caso | null> {
         return null;
     }
 }
+/**
+ * Buscar caso por Documento (CPF ou CNPJ)
+ * Remove caracteres não numéricos antes de buscar.
+ */
+export async function buscarCasoPorDocumento(documento: string): Promise<Caso | null> {
+    if (!documento) return null;
+
+    // Remove tudo que não é dígito
+    const docLimpo = documento.replace(/\D/g, "");
+    if (!docLimpo) return null;
+
+    try {
+        // Tenta buscar pelo documento exato (apenas números)
+        const { data, error } = await supabaseServer
+            .from("casos")
+            .select("*")
+            .eq("DOC_REU", docLimpo)
+            .limit(1)
+            .single();
+
+        if (data) return data;
+
+        // Se não achou, e se o documento começar com 0, tenta sem o zero (ou vice-versa)
+        // Mas por enquanto vamos assumir que o banco está padronizado.
+
+        if (error && error.code !== "PGRST116") {
+            console.error("Erro ao buscar caso por documento:", error);
+        }
+
+        return null;
+    } catch (error) {
+        console.error("Erro geral na busca de casos por documento:", error);
+        return null;
+    }
+}
 
 /**
  * Buscar caso por CPF ou Email (mantida para retrocompatibilidade)
@@ -379,11 +414,11 @@ export async function listarCasosAdmin(
         }
 
         // Filtro de Tipo de Pessoa (PF vs PJ)
-        // Lógica: PJ tem Razão Social preenchida. PF não tem.
+        // Lógica: Baseado na coluna TIPO_DOC ('PF' ou 'PJ')
         if (filtroTipoPessoa === 'pessoa_juridica') {
-            query = query.neq('NOME_RAZAO', null).neq('NOME_RAZAO', '');
+            query = query.eq('TIPO_DOC', 'PJ');
         } else if (filtroTipoPessoa === 'pessoa_fisica') {
-            query = query.or('NOME_RAZAO.is.null,NOME_RAZAO.eq.""');
+            query = query.eq('TIPO_DOC', 'PF');
         }
 
         // Se houver filtro de data, precisamos buscar tudo e filtrar em memória

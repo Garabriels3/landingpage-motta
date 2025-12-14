@@ -12,8 +12,9 @@ declare global {
 export default function FormularioConfirmacao() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [formData, setFormData] = useState({ nome: "", email: "", telefone: "", aceitouTermos: false });
-    const [errors, setErrors] = useState<{ nome?: string; email?: string; telefone?: string; termos?: string; geral?: string }>({});
+    const [formData, setFormData] = useState({ nome: "", email: "", telefone: "", documento: "", aceitouTermos: false });
+    const [tipoDocumento, setTipoDocumento] = useState<'cpf' | 'cnpj'>('cpf');
+    const [errors, setErrors] = useState<{ nome?: string; email?: string; telefone?: string; documento?: string; termos?: string; geral?: string }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hcaptchaToken, setHcaptchaToken] = useState<string | null>(null);
     const [isDarkMode, setIsDarkMode] = useState(true);
@@ -84,6 +85,27 @@ export default function FormularioConfirmacao() {
         }
     };
 
+    // Máscara de Documento (CPF/CNPJ)
+    const handleDocumentoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value.replace(/\D/g, "");
+
+        if (tipoDocumento === 'cpf') {
+            if (value.length > 11) value = value.slice(0, 11);
+            value = value.replace(/(\d{3})(\d)/, "$1.$2");
+            value = value.replace(/(\d{3})(\d)/, "$1.$2");
+            value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        } else {
+            if (value.length > 14) value = value.slice(0, 14);
+            value = value.replace(/^(\d{2})(\d)/, "$1.$2");
+            value = value.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+            value = value.replace(/\.(\d{3})(\d)/, ".$1/$2");
+            value = value.replace(/(\d{4})(\d)/, "$1-$2");
+        }
+
+        setFormData(prev => ({ ...prev, documento: value }));
+        if (errors.documento) setErrors(prev => ({ ...prev, documento: undefined }));
+    };
+
     // Máscara de telefone: (00) 00000-0000
     const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let value = e.target.value.replace(/\D/g, "");
@@ -108,6 +130,18 @@ export default function FormularioConfirmacao() {
 
     const validateForm = () => {
         const newErrors: typeof errors = {};
+
+        // Validar Documento
+        const docLimpo = formData.documento.replace(/\D/g, "");
+        if (tipoDocumento === 'cpf') {
+            if (docLimpo.length !== 11) {
+                newErrors.documento = "CPF incompleto (11 dígitos)";
+            }
+        } else {
+            if (docLimpo.length !== 14) {
+                newErrors.documento = "CNPJ incompleto (14 dígitos)";
+            }
+        }
 
         if (!formData.nome.trim() || formData.nome.trim().length < 3) {
             newErrors.nome = "Nome inválido (mínimo 3 caracteres)";
@@ -159,6 +193,8 @@ export default function FormularioConfirmacao() {
                     nome: formData.nome,
                     email: formData.email,
                     telefone: formData.telefone.replace(/\D/g, ""), // Envia só números
+                    documento: formData.documento.replace(/\D/g, ""), // Envia só números do CPF/CNPJ
+                    tipoDocumento: tipoDocumento,
                     aceitouTermos: formData.aceitouTermos,
                     hcaptchaToken,
                     campaign: campaign || process.env.NEXT_PUBLIC_CAMPAIGN_NAME || "direct"
@@ -224,6 +260,65 @@ export default function FormularioConfirmacao() {
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+
+                {/* Seletor de Tipo de Pessoa (PF vs PJ) */}
+                <div className="flex p-1 bg-gray-100 dark:bg-dark-bgAlt rounded-xl border border-gray-200 dark:border-white/5">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setTipoDocumento('cpf');
+                            setFormData(prev => ({ ...prev, documento: '' })); // Limpa ao trocar
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${tipoDocumento === 'cpf'
+                            ? 'bg-white dark:bg-dark-surface text-primary shadow-sm border border-gray-200 dark:border-white/5'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                            }`}
+                    >
+                        <span className="material-symbols-outlined text-[18px]">person</span>
+                        Pessoa Física (CPF)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setTipoDocumento('cnpj');
+                            setFormData(prev => ({ ...prev, documento: '' })); // Limpa ao trocar
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${tipoDocumento === 'cnpj'
+                            ? 'bg-white dark:bg-dark-surface text-primary shadow-sm border border-gray-200 dark:border-white/5'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                            }`}
+                    >
+                        <span className="material-symbols-outlined text-[18px]">business</span>
+                        Pessoa Jurídica (CNPJ)
+                    </button>
+                </div>
+
+                {/* Campo CPF/CNPJ */}
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-text-main dark:text-dark-textMain ml-1">
+                        {tipoDocumento === 'cpf' ? 'Seu CPF' : 'CNPJ da Empresa'}
+                    </label>
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span className="material-symbols-outlined text-primary-darker dark:text-dark-textMuted">
+                                {tipoDocumento === 'cpf' ? 'badge' : 'domain'}
+                            </span>
+                        </div>
+                        <input
+                            type="text"
+                            name="documento"
+                            value={formData.documento}
+                            onChange={handleDocumentoChange}
+                            maxLength={tipoDocumento === 'cpf' ? 14 : 18}
+                            className={`${inputBaseClass} ${inputBorderClass(!!errors.documento)}`}
+                            placeholder={tipoDocumento === 'cpf' ? "000.000.000-00" : "00.000.000/0000-00"}
+                        />
+                    </div>
+                    {errors.documento && (
+                        <p className="text-xs text-red-500 ml-1 mt-1">{errors.documento}</p>
+                    )}
+                </div>
+
                 {/* Nome */}
                 <div className="space-y-2">
                     <ConteudoText

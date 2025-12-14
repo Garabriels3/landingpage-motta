@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validarEmail, validarNome, validarComprimento } from "@/lib/validations";
-import { gravarConsentimento, verificarRateLimitPersistente, buscarCasoPorEmail, vincularConsentimentoAoCaso } from "@/lib/supabase";
+import { gravarConsentimento, verificarRateLimitPersistente, buscarCasoPorEmail, buscarCasoPorDocumento, vincularConsentimentoAoCaso } from "@/lib/supabase";
 import { extrairIP, extrairUserAgent, verificarRateLimit, TERMOS_HASH } from "@/lib/security";
 
 // Forçar renderização dinâmica
@@ -161,30 +161,58 @@ export async function POST(request: NextRequest) {
                 );
             }
         } catch (error) {
-            console.error("Erro no rate limiting persistente, usando fallback:", error);
-            if (!verificarRateLimit(`email:${emailLower}`, RATE_LIMIT_EMAIL, RATE_LIMIT_WINDOW)) {
-                return NextResponse.json(
-                    { error: "Muitas tentativas com este e-mail. Por favor, aguarde 1 hora." },
-                    { status: 429 }
+            // Fallback silencioso
+        }
+
+        // Rate limit por Documento (CPF/CNPJ)
+        if (body.documento) {
+            const docLimpo = String(body.documento).replace(/\D/g, "");
+            try {
+                const docAllowed = await verificarRateLimitPersistente(
+                    `doc:${docLimpo}`,
+                    RATE_LIMIT_EMAIL, // Usa mesmo limite do email
+                    RATE_LIMIT_WINDOW
                 );
+                if (!docAllowed) {
+                    return NextResponse.json(
+                        { error: "Muitas tentativas com este documento. Por favor, aguarde 1 hora." },
+                        { status: 429 }
+                    );
+                }
+            } catch (error) {
+                // Fallback silencioso
             }
         }
 
-        // 5. BUSCAR PROCESSO NO BANCO (POR EMAIL)
+        // 5. BUSCAR PROCESSO NO BANCO
         let numeroProcesso: string | null = null;
         let casoEncontradoId: string | null = null;
+        const documento = body.documento || ""; // Novo campo: CPF ou CNPJ
 
         try {
-            const caso = await buscarCasoPorEmail(emailLower);
-
-            if (caso) {
-                numeroProcesso = caso.NUMERO_PROCESSO;
-                casoEncontradoId = caso.id;
-                console.log("✅ Caso encontrado:", { id: caso.id, processo: numeroProcesso });
+            // Tenta buscar por Documento primeiro (Prioridade)
+            if (documento) {
+                const casoDoc = await buscarCasoPorDocumento(documento);
+                if (casoDoc) {
+                    numeroProcesso = casoDoc.NUMERO_PROCESSO;
+                    casoEncontradoId = casoDoc.id;
+                    console.log("✅ Caso encontrado por Documento:", { id: casoDoc.id, processo: numeroProcesso });
+                }
             }
+
+            // Fallback: Se não achou por documento (ou não tem documento), tenta por Email
+            if (!casoEncontradoId) {
+                const casoEmail = await buscarCasoPorEmail(emailLower);
+                if (casoEmail) {
+                    numeroProcesso = casoEmail.NUMERO_PROCESSO;
+                    casoEncontradoId = casoEmail.id;
+                    console.log("✅ Caso encontrado por Email:", { id: casoEmail.id, processo: numeroProcesso });
+                }
+            }
+
         } catch (error) {
             console.error("Erro ao buscar caso:", error);
-            // Não retornar erro ao usuário - continuar com null
+            // Não retornar erro ao usuário - continuar com null e gravar consentimento sem vinculo
         }
 
         // 6. GRAVAR CONSENTIMENTO
@@ -192,7 +220,7 @@ export async function POST(request: NextRequest) {
 
         try {
             const consentimentoId = await gravarConsentimento({
-                cpf: "", // Campo vazio, não pedimos mais CPF
+                cpf: documento ? String(documento).replace(/\D/g, "") : "", // Salva o documento limpo (CPF ou CNPJ)
                 nome_fornecido: nome.trim(),
                 email_fornecido: emailLower,
                 telefone: telefoneLimpo,
