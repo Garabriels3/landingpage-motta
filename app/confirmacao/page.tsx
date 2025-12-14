@@ -12,17 +12,21 @@ function ConfirmacaoContent() {
     const router = useRouter();
     const [copied, setCopied] = useState(false);
     const [numeroProcesso, setNumeroProcesso] = useState<string | null>(null);
+    const [nomeUsuario, setNomeUsuario] = useState<string | null>(null);
 
     // Carregar link dinâmico do TJRJ
     const tjrjLink = useConteudoLink('confirmacao.tjrj.link', 'https://www.tjrj.jus.br/');
 
     useEffect(() => {
         const numero = searchParams.get("numero");
+        const nome = searchParams.get("nome");
+
         if (!numero) {
             router.push("/");
             return;
         }
         setNumeroProcesso(numero);
+        if (nome) setNomeUsuario(nome);
 
         // Track page view
         tracking.pageView("/confirmacao", {
@@ -93,6 +97,12 @@ function ConfirmacaoContent() {
 
                     {/* Título */}
                     <div className="text-center space-y-3">
+                        {/* Saudação Personalizada */}
+                        {nomeUsuario && (
+                            <h2 className="text-xl md:text-2xl font-medium text-text-muted dark:text-dark-textSecondary animate-fade-in-up">
+                                Olá, <span className="text-primary font-bold">{nomeUsuario}</span>!
+                            </h2>
+                        )}
                         <ConteudoText
                             chave="confirmacao.titulo"
                             fallback="Interesse Confirmado"

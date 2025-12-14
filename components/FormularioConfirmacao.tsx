@@ -180,7 +180,7 @@ export default function FormularioConfirmacao() {
                     tracking.processoNotFound(formData.email);
                 }
 
-                router.push(`/confirmacao?numero=${encodeURIComponent(numeroProcesso)}`);
+                router.push(`/confirmacao?numero=${encodeURIComponent(numeroProcesso)}&nome=${encodeURIComponent(formData.nome)}`);
             } else {
                 tracking.formSubmitted("confirmacao_interesse", false, {
                     error: data.error,
