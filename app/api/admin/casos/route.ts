@@ -22,10 +22,12 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get("limit") || "50");
         const q = searchParams.get("q") || "";
         const filtroAdvogado = searchParams.get("advogado") as 'todos' | 'com_advogado' | 'sem_advogado' || 'todos';
+        const filtroConsentimento = searchParams.get("consentimento") as 'todos' | 'com_consentimento' | 'sem_consentimento' || 'todos';
+        const filtroTipoPessoa = searchParams.get("tipo_pessoa") as 'todos' | 'pessoa_fisica' | 'pessoa_juridica' || 'todos';
         const dataInicio = searchParams.get("data_inicio") || "";
         const dataFim = searchParams.get("data_fim") || "";
 
-        const result = await listarCasosAdmin(page, limit, q, filtroAdvogado, dataInicio, dataFim);
+        const result = await listarCasosAdmin(page, limit, q, filtroAdvogado, filtroConsentimento, filtroTipoPessoa, dataInicio, dataFim);
 
         return NextResponse.json({
             data: result.data,

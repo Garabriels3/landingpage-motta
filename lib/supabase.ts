@@ -343,6 +343,8 @@ export async function listarCasosAdmin(
     limit = 50,
     termoBusca = "",
     filtroAdvogado: 'todos' | 'com_advogado' | 'sem_advogado' = 'todos',
+    filtroConsentimento: 'todos' | 'com_consentimento' | 'sem_consentimento' = 'todos',
+    filtroTipoPessoa: 'todos' | 'pessoa_fisica' | 'pessoa_juridica' = 'todos',
     dataInicio = "",
     dataFim = ""
 ): Promise<{ data: Caso[]; count: number }> {
@@ -369,6 +371,21 @@ export async function listarCasosAdmin(
             query = query.or('ADVOGADO.is.null,ADVOGADO.eq.""');
         }
 
+        // Filtro de Consentimento
+        if (filtroConsentimento === 'com_consentimento') {
+            query = query.not('consentimento_id', 'is', null);
+        } else if (filtroConsentimento === 'sem_consentimento') {
+            query = query.is('consentimento_id', null);
+        }
+
+        // Filtro de Tipo de Pessoa (PF vs PJ)
+        // Lógica: PJ tem Razão Social preenchida. PF não tem.
+        if (filtroTipoPessoa === 'pessoa_juridica') {
+            query = query.neq('NOME_RAZAO', null).neq('NOME_RAZAO', '');
+        } else if (filtroTipoPessoa === 'pessoa_fisica') {
+            query = query.or('NOME_RAZAO.is.null,NOME_RAZAO.eq.""');
+        }
+
         // Se houver filtro de data, precisamos buscar tudo e filtrar em memória
         // pois o formato no banco pode ser DD/MM/YYYY (texto) que não aceita range query direto
         const isDateFilterActive = dataInicio || dataFim;
@@ -380,8 +397,11 @@ export async function listarCasosAdmin(
             // Busca tudo (sem range) para filtrar em memória
             // AVISO: Isso pode ser pesado se houverem milhares de registros. 
             // Ideal seria corrigir o tipo da coluna no banco para DATE.
-            // Ideal seria corrigir o tipo da coluna no banco para DATE.
-            const response = await query.order("id", { ascending: true }).limit(5000);
+            const response = await query
+                .order("consentimento_id", { ascending: false, nullsFirst: false })
+                .order("id", { ascending: true })
+                .limit(5000);
+
             if (response.error) throw response.error;
 
             let todosCasos = response.data || [];
@@ -433,8 +453,9 @@ export async function listarCasosAdmin(
             const to = from + limit - 1;
 
             const response = await query
-                .range(from, to)
-                .order("id", { ascending: true });
+                .order("consentimento_id", { ascending: false, nullsFirst: false }) // Prioriza com consentimento
+                .order("id", { ascending: true }) // Desempate por ID
+                .range(from, to);
 
             if (response.error) throw response.error;
 

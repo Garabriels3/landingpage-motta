@@ -148,9 +148,10 @@ export default function AdminConteudosPage() {
 
     // Estados - Filtros Casos
     const [filtroAdvogado, setFiltroAdvogado] = useState<'todos' | 'com_advogado' | 'sem_advogado'>('todos');
+    const [filtroConsentimento, setFiltroConsentimento] = useState<'todos' | 'com_consentimento' | 'sem_consentimento'>('todos');
+    const [filtroTipoPessoa, setFiltroTipoPessoa] = useState<'todos' | 'pessoa_fisica' | 'pessoa_juridica'>('todos');
     const [filtroDataInicio, setFiltroDataInicio] = useState('');
     const [filtroDataFim, setFiltroDataFim] = useState('');
-
 
 
     // ============================================
@@ -184,7 +185,7 @@ export default function AdminConteudosPage() {
             setPaginaCasos(0);
             carregarCasos(0, buscaCasos);
         }
-    }, [filtroAdvogado, filtroDataInicio, filtroDataFim]);
+    }, [filtroAdvogado, filtroConsentimento, filtroTipoPessoa, filtroDataInicio, filtroDataFim]);
 
     // ============================================
     // FUNÇÕES AUXILIARES
@@ -296,6 +297,8 @@ export default function AdminConteudosPage() {
 
             // Filtros
             if (filtroAdvogado !== 'todos') params.append("advogado", filtroAdvogado);
+            if (filtroConsentimento !== 'todos') params.append("consentimento", filtroConsentimento);
+            if (filtroTipoPessoa !== 'todos') params.append("tipo_pessoa", filtroTipoPessoa);
             if (filtroDataInicio) params.append("data_inicio", filtroDataInicio);
             if (filtroDataFim) params.append("data_fim", filtroDataFim);
 
@@ -541,6 +544,28 @@ export default function AdminConteudosPage() {
                                             <option value="sem_advogado">Sem Advogado</option>
                                         </select>
 
+                                        {/* Select Consentimento (NOVO) */}
+                                        <select
+                                            value={filtroConsentimento}
+                                            onChange={(e) => setFiltroConsentimento(e.target.value as any)}
+                                            className="bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white focus:border-primary focus:outline-none min-w-[170px]"
+                                        >
+                                            <option value="todos">Todos os Consentimentos</option>
+                                            <option value="com_consentimento">Com Consentimento</option>
+                                            <option value="sem_consentimento">Sem Consentimento</option>
+                                        </select>
+
+                                        {/* Select Tipo Pessoa (NOVO) */}
+                                        <select
+                                            value={filtroTipoPessoa}
+                                            onChange={(e) => setFiltroTipoPessoa(e.target.value as any)}
+                                            className="bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white focus:border-primary focus:outline-none min-w-[170px]"
+                                        >
+                                            <option value="todos">Todos os Tipos de Pessoa</option>
+                                            <option value="pessoa_fisica">Pessoa Física</option>
+                                            <option value="pessoa_juridica">Pessoa Jurídica</option>
+                                        </select>
+
                                         <div className="h-6 w-px bg-white/10 mx-2 hidden md:block"></div>
 
                                         {/* Data Distribuição */}
@@ -561,10 +586,12 @@ export default function AdminConteudosPage() {
                                             />
                                         </div>
 
-                                        {(filtroAdvogado !== 'todos' || filtroDataInicio || filtroDataFim) && (
+                                        {(filtroAdvogado !== 'todos' || filtroConsentimento !== 'todos' || filtroTipoPessoa !== 'todos' || filtroDataInicio || filtroDataFim) && (
                                             <button
                                                 onClick={() => {
                                                     setFiltroAdvogado('todos');
+                                                    setFiltroConsentimento('todos');
+                                                    setFiltroTipoPessoa('todos');
                                                     setFiltroDataInicio('');
                                                     setFiltroDataFim('');
                                                 }}
