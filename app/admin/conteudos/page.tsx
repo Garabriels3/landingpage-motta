@@ -1,7 +1,20 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Papa from "papaparse";
+
+// Tipo para o CSV
+interface CSVRow {
+    NUMERO_PROCESSO: string;
+    REU: string;
+    DOC_REU?: string;
+    EMAIL?: string;
+    TELEFONE?: string;
+    // ... outros campos opcionais
+    [key: string]: any;
+}
 
 // Tipos
 type ConteudoTexto = {
@@ -159,6 +172,16 @@ export default function AdminConteudosPage() {
     const [filtroDataInicio, setFiltroDataInicio] = useState('');
     const [filtroDataFim, setFiltroDataFim] = useState('');
 
+    // Estados de seleção (Bulk Actions)
+    const [casosSelecionados, setCasosSelecionados] = useState<string[]>([]);
+    const [isAllSelected, setIsAllSelected] = useState(false);
+    const [deletandoLote, setDeletandoLote] = useState(false);
+
+    // Estados de Importação CSV
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const [importStats, setImportStats] = useState<{ inserted: number, updated: number, errors: string[] } | null>(null);
+
 
     // ============================================
     // EFEITOS
@@ -167,6 +190,133 @@ export default function AdminConteudosPage() {
     // Carregar dados iniciais
     useEffect(() => {
         carregarConteudos();
+    }, []);
+
+    // Efeito para sincronizar "Select All" com a página atual
+    useEffect(() => {
+        if (casos.length > 0 && casosSelecionados.length > 0) {
+            const allInPageSelected = casos.every(c => casosSelecionados.includes(c.id));
+            setIsAllSelected(allInPageSelected);
+        } else {
+            setIsAllSelected(false);
+        }
+    }, [casos, casosSelecionados]);
+
+    // Função: Toggle Seleção de Único Caso
+    const toggleSelectCaso = (id: string, e: React.SyntheticEvent) => {
+        e.stopPropagation(); // Evita abrir o detalhe do caso
+        setCasosSelecionados(prev => {
+            if (prev.includes(id)) {
+                return prev.filter(item => item !== id);
+            } else {
+                return [...prev, id];
+            }
+        });
+    };
+
+    // Função: Toggle Selecionar Todos da Página
+    const toggleSelectAll = () => {
+        if (isAllSelected) {
+            // Desmarcar todos da página atual
+            const idsPagina = casos.map(c => c.id);
+            setCasosSelecionados(prev => prev.filter(id => !idsPagina.includes(id)));
+        } else {
+            // Marcar todos da página atual
+            const idsPagina = casos.map(c => c.id);
+            const novos = idsPagina.filter(id => !casosSelecionados.includes(id));
+            setCasosSelecionados(prev => [...prev, ...novos]);
+        }
+    };
+
+    // Função: Deletar em Lote
+    const handleBulkDelete = async () => {
+        if (!confirm(`Tem certeza que deseja deletar ${casosSelecionados.length} casos ? Essa ação não pode ser desfeita.`)) return;
+
+        setDeletandoLote(true);
+        try {
+            const res = await fetch('/api/admin/casos/batch', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: casosSelecionados })
+            });
+
+            if (!res.ok) throw new Error("Erro ao deletar");
+
+            alert("Casos deletados com sucesso!");
+            setCasosSelecionados([]);
+            carregarCasos(paginaCasos, buscaCasos); // Recarrega a lista
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao deletar casos.");
+        } finally {
+            setDeletandoLote(false);
+        }
+    };
+
+    // Função: Processar Upload CSV
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setImporting(true);
+        setImportStats(null);
+
+        Papa.parse<CSVRow>(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: async (results) => {
+                const rows = results.data;
+                console.log("Parsed CSV:", rows);
+
+                try {
+                    const res = await fetch('/api/admin/casos/batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ casos: rows })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || "Erro na importação");
+
+                    setImportStats(data.results);
+                    carregarCasos(0, ""); // Reset para primeira página
+                } catch (error) {
+                    console.error("Import Error:", error);
+                    alert("Erro ao processar importação: " + (error as any).message);
+                } finally {
+                    setImporting(false);
+                    // Limpar input
+                    e.target.value = "";
+                }
+            },
+            error: (error) => {
+                console.error("CSV Parse Error:", error);
+                alert("Erro ao ler arquivo CSV.");
+                setImporting(false);
+            }
+        });
+    };
+
+    // Função: Baixar Modelo CSV
+    const downloadTemplate = () => {
+        const headers = ["NUMERO_PROCESSO", "REU", "DOC_REU", "EMAIL", "TELEFONE", "DATA_DISTRIBUICAO", "VARA", "COMARCA", "VALOR_CAUSA"];
+        const csvContent = headers.join(",") + "\n";
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", "modelo_importacao_casos.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // This useEffect was already present, moved here to be after new effects/functions
+    useEffect(() => {
+        // Assuming verificarSessao is defined elsewhere or removed if not needed.
+        // If it's a function that needs to be called on component mount, it should be here.
+        // For now, keeping it as a placeholder comment.
+        // verificarSessao();
     }, []);
 
     // Carregar dados ao trocar de aba
@@ -210,7 +360,7 @@ export default function AdminConteudosPage() {
         setCarregando(true);
         try {
             const url = filtroPagina !== "all"
-                ? `/api/admin/conteudos?pagina=${encodeURIComponent(filtroPagina)}`
+                ? `/ api / admin / conteudos ? pagina = ${encodeURIComponent(filtroPagina)} `
                 : "/api/admin/conteudos";
 
             const response = await fetch(url, {
@@ -249,7 +399,7 @@ export default function AdminConteudosPage() {
                     },
                     body: JSON.stringify({ chave, texto })
                 });
-                if (!response.ok) throw new Error(`Falha ao salvar ${chave}`);
+                if (!response.ok) throw new Error(`Falha ao salvar ${chave} `);
             });
 
             await Promise.all(updates);
@@ -285,7 +435,7 @@ export default function AdminConteudosPage() {
             if (filtroDataFimCad) params.append("dataFim", filtroDataFimCad);
             if (filtroCampaignCad) params.append("campaign", filtroCampaignCad);
 
-            const response = await fetch(`/api/admin/consentimentos?${params.toString()}`, {
+            const response = await fetch(`/ api / admin / consentimentos ? ${params.toString()} `, {
                 cache: 'no-store',
             });
             if (response.ok) {
@@ -328,7 +478,7 @@ export default function AdminConteudosPage() {
             if (filtroDataInicio) params.append("data_inicio", filtroDataInicio);
             if (filtroDataFim) params.append("data_fim", filtroDataFim);
 
-            const response = await fetch(`/api/admin/casos?${params.toString()}`, {
+            const response = await fetch(`/ api / admin / casos ? ${params.toString()} `, {
                 cache: 'no-store',
             });
 
@@ -420,10 +570,10 @@ export default function AdminConteudosPage() {
 
             {/* Sidebar */}
             <aside className={`
-                fixed inset-y-0 left-0 z-50 w-72 bg-[#2a261f] border-r border-white/5 flex flex-col justify-between shrink-0 h-full transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
-                md:relative md:translate-x-0
+                fixed inset - y - 0 left - 0 z - 50 w - 72 bg - [#2a261f] border - r border - white / 5 flex flex - col justify - between shrink - 0 h - full transition - transform duration - 300 ease -in -out shadow - 2xl md: shadow - none
+md:relative md: translate - x - 0
                 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-            `}>
+`}>
                 <div className="flex flex-col gap-6 p-6">
                     {/* Brand */}
                     <div className="flex items-center justify-between mb-4">
@@ -452,30 +602,30 @@ export default function AdminConteudosPage() {
                     <nav className="flex flex-col gap-2">
                         <button
                             onClick={() => { setActiveTab("textos"); setMobileMenuOpen(false); }}
-                            className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "textos"
+                            className={`flex items - center gap - 3 h - 12 px - 4 rounded - xl text - sm font - medium transition - all ${activeTab === "textos"
                                 ? "bg-primary text-black shadow-lg shadow-primary/20"
                                 : "text-gray-400 hover:text-white hover:bg-white/5"
-                                }`}
+                                } `}
                         >
                             <span className="material-symbols-outlined">edit_document</span>
                             Gerenciar Textos
                         </button>
                         <button
                             onClick={() => { setActiveTab("casos"); setMobileMenuOpen(false); }}
-                            className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "casos"
+                            className={`flex items - center gap - 3 h - 12 px - 4 rounded - xl text - sm font - medium transition - all ${activeTab === "casos"
                                 ? "bg-primary text-black shadow-lg shadow-primary/20"
                                 : "text-gray-400 hover:text-white hover:bg-white/5"
-                                }`}
+                                } `}
                         >
                             <span className="material-symbols-outlined">folder_managed</span>
                             Gestão de Casos
                         </button>
                         <button
                             onClick={() => { setActiveTab("cadastros"); setMobileMenuOpen(false); }}
-                            className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "cadastros"
+                            className={`flex items - center gap - 3 h - 12 px - 4 rounded - xl text - sm font - medium transition - all ${activeTab === "cadastros"
                                 ? "bg-primary text-black shadow-lg shadow-primary/20"
                                 : "text-gray-400 hover:text-white hover:bg-white/5"
-                                }`}
+                                } `}
                         >
                             <span className="material-symbols-outlined">group</span>
                             Cadastros Recebidos
@@ -538,6 +688,16 @@ export default function AdminConteudosPage() {
                                                 <span className="material-symbols-outlined text-[20px]">search</span>
                                             </button>
                                         </form>
+
+                                        {/* Botão Importar CSV */}
+                                        <button
+                                            onClick={() => setShowImportModal(true)}
+                                            className="flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20 text-sm font-medium transition-colors"
+                                            title="Importar Casos via CSV"
+                                        >
+                                            <span className="material-symbols-outlined text-[18px]">upload_file</span>
+                                            <span className="hidden md:inline">Importar</span>
+                                        </button>
 
                                         <button
                                             onClick={() => {
@@ -648,9 +808,17 @@ export default function AdminConteudosPage() {
                                 ) : (
                                     <div className="flex gap-6 md:h-full">
                                         {/* Lista de casos */}
-                                        <div className={`transition-all duration-300 md:h-full md:flex md:flex-col ${casoSelecionado ? 'hidden md:block md:w-[55%]' : 'w-full'}`}>
+                                        <div className={`transition - all duration - 300 md: h - full md:flex md: flex - col ${casoSelecionado ? 'hidden md:block md:w-[55%]' : 'w-full'} `}>
                                             <div className="bg-[#2a261f] rounded-xl border border-white/5 overflow-hidden md:h-full md:flex md:flex-col">
-                                                <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-[#1e1a14] border-b border-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                                <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-[#1e1a14] border-b border-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider items-center">
+                                                    <div className="col-span-1 flex justify-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isAllSelected}
+                                                            onChange={toggleSelectAll}
+                                                            className="w-4 h-4 rounded border-gray-600 bg-[#2a261f] text-primary focus:ring-primary/50"
+                                                        />
+                                                    </div>
                                                     <div className="col-span-1 text-center">Status</div>
                                                     <div className="col-span-5">Réu / Nome</div>
                                                     <div className="col-span-3">Email</div>
@@ -666,8 +834,17 @@ export default function AdminConteudosPage() {
                                                             <div
                                                                 key={caso.id}
                                                                 onClick={() => setCasoSelecionado(isSelected ? null : caso)}
-                                                                className={`flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 px-6 py-4 cursor-pointer transition-all md:items-center border-b border-white/5 md:border-b-0 ${isSelected ? 'bg-primary/10 border-l-4 border-primary' : 'hover:bg-white/5'}`}
+                                                                className={`flex flex - col md:grid md: grid - cols - 12 gap - 3 md: gap - 4 px - 6 py - 4 cursor - pointer transition - all md: items - center border - b border - white / 5 md: border - b - 0 ${isSelected ? 'bg-primary/10 border-l-4 border-primary' : 'hover:bg-white/5'} `}
                                                             >
+                                                                {/* Checkbox (Mobile & Desktop) */}
+                                                                <div className="md:col-span-1 flex md:justify-center" onClick={(e) => e.stopPropagation()}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={casosSelecionados.includes(caso.id)}
+                                                                        onChange={(e) => toggleSelectCaso(caso.id, e)} // Corrigido para passar o evento
+                                                                        className="w-4 h-4 rounded border-gray-600 bg-[#2a261f] text-primary focus:ring-primary/50"
+                                                                    />
+                                                                </div>
                                                                 {/* Mobile Header: Icon + Name */}
                                                                 <div className="flex items-center gap-3 md:contents">
                                                                     <div className="flex-shrink-0 md:col-span-1 md:flex md:justify-center">
@@ -700,7 +877,7 @@ export default function AdminConteudosPage() {
                                                                             </span>
                                                                         )}
                                                                         {caso.ADVOGADO && (
-                                                                            <span className="text-xs text-amber-500 flex items-center gap-1 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20" title={`Advogado: ${caso.ADVOGADO}`}>
+                                                                            <span className="text-xs text-amber-500 flex items-center gap-1 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20" title={`Advogado: ${caso.ADVOGADO} `}>
                                                                                 <span className="material-symbols-outlined text-[14px]">gavel</span>
                                                                                 Adv.
                                                                             </span>
@@ -741,7 +918,7 @@ export default function AdminConteudosPage() {
                                         </div>
 
                                         {/* Card de Detalhes */}
-                                        <div className={`transition-all duration-300 md:h-full md:flex md:flex-col ${casoSelecionado ? 'fixed inset-0 z-[60] bg-[#1e1a14] md:static md:w-[45%] md:bg-transparent md:z-auto opacity-100 flex flex-col' : 'w-0 opacity-0 hidden'}`}>
+                                        <div className={`transition - all duration - 300 md: h - full md:flex md: flex - col ${casoSelecionado ? 'fixed inset-0 z-[60] bg-[#1e1a14] md:static md:w-[45%] md:bg-transparent md:z-auto opacity-100 flex flex-col' : 'w-0 opacity-0 hidden'} `}>
                                             {casoSelecionado && (
                                                 <div className="bg-[#2a261f] border-b border-white/5 md:rounded-xl md:border md:border-white/5 h-full md:h-full flex flex-col">
                                                     <div className="flex items-center justify-between p-6 border-b border-white/5">
@@ -902,7 +1079,7 @@ export default function AdminConteudosPage() {
                                                                             <label className="text-xs text-gray-500 uppercase tracking-wider">Logradouro</label>
                                                                             <p className="text-gray-300 mt-1">
                                                                                 {[casoSelecionado.TIPO_LOGR, casoSelecionado.TITULO_LOGR, casoSelecionado.LOGRADOURO].filter(Boolean).join(' ')}
-                                                                                {casoSelecionado.NUMERO && `, ${casoSelecionado.NUMERO}`}
+                                                                                {casoSelecionado.NUMERO && `, ${casoSelecionado.NUMERO} `}
                                                                             </p>
                                                                         </div>
                                                                     )}
@@ -1209,10 +1386,10 @@ export default function AdminConteudosPage() {
                                 <div className="flex gap-2 mt-6 overflow-x-auto pb-2 w-full touch-pan-x snap-x">
                                     <button
                                         onClick={() => setFiltroPagina("all")}
-                                        className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${filtroPagina === "all"
+                                        className={`px - 4 py - 2 rounded - full text - xs font - bold uppercase tracking - wider whitespace - nowrap transition - colors ${filtroPagina === "all"
                                             ? "bg-white text-black"
                                             : "bg-[#2a261f] text-gray-400 hover:text-white hover:bg-[#332d25]"
-                                            }`}
+                                            } `}
                                     >
                                         Todos
                                     </button>
@@ -1220,10 +1397,10 @@ export default function AdminConteudosPage() {
                                         <button
                                             key={key}
                                             onClick={() => setFiltroPagina(key)}
-                                            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${filtroPagina === key
+                                            className={`px - 4 py - 2 rounded - full text - xs font - bold uppercase tracking - wider whitespace - nowrap transition - colors ${filtroPagina === key
                                                 ? "bg-white text-black"
                                                 : "bg-[#2a261f] text-gray-400 hover:text-white hover:bg-[#332d25]"
-                                                }`}
+                                                } `}
                                         >
                                             {PAGINAS_CONFIG[key].nome}
                                         </button>
@@ -1309,14 +1486,14 @@ export default function AdminConteudosPage() {
                                                                                 value={valorAtual}
                                                                                 onChange={(e) => handleTextoChange(conteudo.chave, e.target.value)}
                                                                                 rows={pageKey === 'legal' ? 20 : 6}
-                                                                                className={`w-full bg-[#1e1a14] border rounded-lg p-3 text-sm text-white placeholder-gray-600 focus:border-primary focus:outline-none transition-all font-mono leading-relaxed ${modificado ? "border-primary/50 bg-primary/5" : "border-white/10"}`}
+                                                                                className={`w - full bg - [#1e1a14] border rounded - lg p - 3 text - sm text - white placeholder - gray - 600 focus: border - primary focus: outline - none transition - all font - mono leading - relaxed ${modificado ? "border-primary/50 bg-primary/5" : "border-white/10"} `}
                                                                             />
                                                                         ) : (
                                                                             <input
                                                                                 type="text"
                                                                                 value={valorAtual}
                                                                                 onChange={(e) => handleTextoChange(conteudo.chave, e.target.value)}
-                                                                                className={`w-full bg-[#1e1a14] border rounded-lg h-10 px-4 text-sm text-white placeholder-gray-600 focus:border-primary focus:outline-none transition-all ${modificado ? "border-primary/50 bg-primary/5" : "border-white/10"}`}
+                                                                                className={`w - full bg - [#1e1a14] border rounded - lg h - 10 px - 4 text - sm text - white placeholder - gray - 600 focus: border - primary focus: outline - none transition - all ${modificado ? "border-primary/50 bg-primary/5" : "border-white/10"} `}
                                                                             />
                                                                         )}
 
@@ -1533,7 +1710,7 @@ export default function AdminConteudosPage() {
                                                             >
                                                                 <span className="material-symbols-outlined text-[16px]">chat</span>
                                                                 WhatsApp
-                                                            </a>
+                                                            </a >
                                                         ) : (
                                                             <button disabled className="flex-1 md:flex-none h-8 px-3 bg-white/5 text-gray-600 rounded-lg flex items-center justify-center gap-2 text-xs cursor-not-allowed">
                                                                 <span className="material-symbols-outlined text-[16px]">chat_off</span>
@@ -1551,12 +1728,12 @@ export default function AdminConteudosPage() {
                                                         >
                                                             <span className="material-symbols-outlined text-[16px]">content_copy</span>
                                                         </button>
-                                                    </div>
-                                                </div>
+                                                    </div >
+                                                </div >
                                             ))}
-                                        </div>
+                                        </div >
                                         {/* Paginação */}
-                                        <div className="px-6 py-4 border-t border-white/5 bg-[#1e1a14]/50 flex items-center justify-between">
+                                        < div className="px-6 py-4 border-t border-white/5 bg-[#1e1a14]/50 flex items-center justify-between" >
                                             <div className="text-xs text-gray-500">
                                                 Mostrando {consentimentos.length} de {totalConsentimentos} resultados
                                             </div>
@@ -1579,17 +1756,17 @@ export default function AdminConteudosPage() {
                                                     Próxima →
                                                 </button>
                                             </div>
-                                        </div>
-                                    </div>
+                                        </div >
+                                    </div >
                                 )}
-                            </div>
-                        </div>
+                            </div >
+                        </div >
                     </>
                 )}
-            </main>
+            </main >
 
             {/* Custom Scrollbar Styles */}
-            <style jsx global>{`
+            < style jsx global > {`
                 .scrollbar-hide::-webkit-scrollbar {
                     display: none;
                 }
@@ -1597,7 +1774,132 @@ export default function AdminConteudosPage() {
                     -ms-overflow-style: none;
                     scrollbar-width: none;
                 }
-            `}</style>
+            `}</style >
+            {/* Floating Action Bar (Bulk Delete) */}
+            {
+                casosSelecionados.length > 0 && (
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1e1a14] border border-white/10 rounded-full px-6 py-3 shadow-2xl flex items-center gap-4 animate-slide-up">
+                        <span className="text-white font-medium text-sm">{casosSelecionados.length} selecionado(s)</span>
+                        <div className="h-4 w-px bg-white/10"></div>
+                        <button
+                            onClick={handleBulkDelete}
+                            disabled={deletandoLote}
+                            className="flex items-center gap-2 text-red-400 hover:text-red-300 font-bold text-sm transition-colors disabled:opacity-50"
+                        >
+                            {deletandoLote ? (
+                                <span className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <span className="material-symbols-outlined text-[18px]">delete</span>
+                            )}
+                            Deletar
+                        </button>
+                    </div>
+                )
+            }
+
+            {/* Modal Importação CSV */}
+            {
+                showImportModal && (
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                        <div className="bg-[#1e1a14] rounded-2xl border border-white/5 w-full max-w-lg overflow-hidden shadow-2xl animate-scale-in">
+                            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-emerald-500">upload_file</span>
+                                    Importar CSV
+                                </h3>
+                                <button onClick={() => setShowImportModal(false)} className="text-gray-400 hover:text-white">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+
+                            <div className="p-6 space-y-6">
+                                {!importStats ? (
+                                    <>
+                                        <div className="bg-primary/5 border border-primary/10 rounded-xl p-4">
+                                            <h4 className="text-primary font-bold text-sm mb-2 flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-[18px]">info</span>
+                                                Instruções Importantes
+                                            </h4>
+                                            <ul className="text-sm text-gray-400 space-y-1 ml-6 list-disc">
+                                                <li>Use o modelo padrão para evitar erros.</li>
+                                                <li>Processos com o mesmo <strong>Número + Réu</strong> serão atualizados.</li>
+                                                <li>Colunas vazias serão ignoradas (mantidas como opcionais).</li>
+                                            </ul>
+                                            <button
+                                                onClick={downloadTemplate}
+                                                className="mt-4 text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                                            >
+                                                <span className="material-symbols-outlined text-[14px]">download</span>
+                                                Baixar Modelo CSV
+                                            </button>
+                                        </div>
+
+                                        <div className="border-2 border-dashed border-white/10 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-white/5 transition-colors cursor-pointer relative">
+                                            <input
+                                                type="file"
+                                                accept=".csv"
+                                                onChange={handleFileUpload}
+                                                disabled={importing}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                            />
+                                            {importing ? (
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                                    <p className="text-gray-400">Processando arquivo...</p>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <span className="material-symbols-outlined text-gray-500 text-4xl mb-2">cloud_upload</span>
+                                                    <p className="text-white font-medium">Clique ou arraste seu arquivo CSV</p>
+                                                    <p className="text-xs text-gray-500 mt-1">Apenas arquivos .csv</p>
+                                                </>
+                                            )}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl text-center">
+                                                <div className="text-2xl font-bold text-emerald-500">{importStats.inserted}</div>
+                                                <div className="text-xs text-emerald-400 uppercase font-bold tracking-wider">Novos</div>
+                                            </div>
+                                            <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl text-center">
+                                                <div className="text-2xl font-bold text-blue-500">{importStats.updated}</div>
+                                                <div className="text-xs text-blue-400 uppercase font-bold tracking-wider">Atualizados</div>
+                                            </div>
+                                        </div>
+
+                                        {importStats.errors.length > 0 && (
+                                            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+                                                <h4 className="text-red-400 font-bold text-sm mb-2 flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-[18px]">warning</span>
+                                                    Erros ({importStats.errors.length})
+                                                </h4>
+                                                <div className="max-h-32 overflow-y-auto text-xs text-red-300 space-y-1">
+                                                    {importStats.errors.map((err, idx) => (
+                                                        <div key={idx} className="border-b border-red-500/10 pb-1 last:border-0">{err}</div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <button
+                                            onClick={() => {
+                                                setImportStats(null);
+                                                setShowImportModal(false);
+                                            }}
+                                            className="w-full h-12 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                                        >
+                                            Concluir
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div >
     );
 }
+
