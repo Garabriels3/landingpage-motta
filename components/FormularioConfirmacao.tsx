@@ -262,34 +262,40 @@ export default function FormularioConfirmacao() {
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
                 {/* Seletor de Tipo de Pessoa (PF vs PJ) */}
-                <div className="flex p-1 bg-gray-100 dark:bg-dark-bgAlt rounded-xl border border-gray-200 dark:border-white/5">
+                <div className="relative flex w-full p-1.5 bg-gray-100 dark:bg-dark-bgAlt rounded-xl border border-gray-200 dark:border-white/5 isolate">
+                    {/* Animated Background Pill */}
+                    <div
+                        className={`absolute inset-y-1.5 w-[calc(50%-6px)] bg-white dark:bg-dark-surface rounded-lg shadow-sm border border-gray-200 dark:border-white/5 transition-all duration-300 ease-in-out z-[-1] ${tipoDocumento === 'cpf' ? 'left-1.5' : 'left-[calc(50%+3px)]'
+                            }`}
+                    />
+
                     <button
                         type="button"
                         onClick={() => {
                             setTipoDocumento('cpf');
-                            setFormData(prev => ({ ...prev, documento: '' })); // Limpa ao trocar
+                            setFormData(prev => ({ ...prev, documento: '' }));
                         }}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${tipoDocumento === 'cpf'
-                            ? 'bg-white dark:bg-dark-surface text-primary shadow-sm border border-gray-200 dark:border-white/5'
+                        className={`flex-1 flex items-center justify-center gap-3 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-300 ${tipoDocumento === 'cpf'
+                            ? 'text-primary'
                             : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                             }`}
                     >
-                        <span className="material-symbols-outlined text-[18px]">person</span>
-                        Pessoa Física (CPF)
+                        <span className="material-symbols-outlined text-[20px]">person</span>
+                        Pessoa Física
                     </button>
                     <button
                         type="button"
                         onClick={() => {
                             setTipoDocumento('cnpj');
-                            setFormData(prev => ({ ...prev, documento: '' })); // Limpa ao trocar
+                            setFormData(prev => ({ ...prev, documento: '' }));
                         }}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${tipoDocumento === 'cnpj'
-                            ? 'bg-white dark:bg-dark-surface text-primary shadow-sm border border-gray-200 dark:border-white/5'
+                        className={`flex-1 flex items-center justify-center gap-3 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-300 ${tipoDocumento === 'cnpj'
+                            ? 'text-primary'
                             : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                             }`}
                     >
-                        <span className="material-symbols-outlined text-[18px]">business</span>
-                        Pessoa Jurídica (CNPJ)
+                        <span className="material-symbols-outlined text-[20px]">business</span>
+                        Pessoa Jurídica
                     </button>
                 </div>
 

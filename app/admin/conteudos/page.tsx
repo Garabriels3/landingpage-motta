@@ -553,8 +553,8 @@ export default function AdminConteudosPage() {
 
                                 {/* Toolbar de Filtros */}
                                 <div className="mt-6 border-t border-white/5 pt-6">
-                                    <div className="flex flex-wrap items-center gap-4 bg-[#2a261f] border border-white/5 p-3 rounded-xl">
-                                        <div className="flex items-center gap-2">
+                                    <div className="grid grid-cols-1 md:flex md:flex-wrap items-center gap-4 bg-[#2a261f] border border-white/5 p-3 rounded-xl">
+                                        <div className="flex items-center gap-2 md:w-auto w-full justify-center md:justify-start pb-2 md:pb-0 border-b md:border-b-0 border-white/5">
                                             <span className="material-symbols-outlined text-gray-400 text-[20px]">filter_alt</span>
                                             <span className="text-gray-400 text-sm font-medium">Filtrar por:</span>
                                         </div>
@@ -563,7 +563,7 @@ export default function AdminConteudosPage() {
                                         <select
                                             value={filtroAdvogado}
                                             onChange={(e) => setFiltroAdvogado(e.target.value as any)}
-                                            className="bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white focus:border-primary focus:outline-none min-w-[160px]"
+                                            className="w-full md:w-auto bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white focus:border-primary focus:outline-none min-w-[160px]"
                                         >
                                             <option value="todos">Todos os Status</option>
                                             <option value="com_advogado">Com Advogado</option>
@@ -574,7 +574,7 @@ export default function AdminConteudosPage() {
                                         <select
                                             value={filtroConsentimento}
                                             onChange={(e) => setFiltroConsentimento(e.target.value as any)}
-                                            className="bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white focus:border-primary focus:outline-none min-w-[170px]"
+                                            className="w-full md:w-auto bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white focus:border-primary focus:outline-none min-w-[170px]"
                                         >
                                             <option value="todos">Todos os Consentimentos</option>
                                             <option value="com_consentimento">Com Consentimento</option>
@@ -585,7 +585,7 @@ export default function AdminConteudosPage() {
                                         <select
                                             value={filtroTipoPessoa}
                                             onChange={(e) => setFiltroTipoPessoa(e.target.value as any)}
-                                            className="bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white focus:border-primary focus:outline-none min-w-[170px]"
+                                            className="w-full md:w-auto bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white focus:border-primary focus:outline-none min-w-[170px]"
                                         >
                                             <option value="todos">Todos os Tipos de Pessoa</option>
                                             <option value="pessoa_fisica">Pessoa Física</option>
@@ -595,21 +595,23 @@ export default function AdminConteudosPage() {
                                         <div className="h-6 w-px bg-white/10 mx-2 hidden md:block"></div>
 
                                         {/* Data Distribuição */}
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-gray-500 text-xs font-bold uppercase tracking-wider">Distribuição:</span>
-                                            <input
-                                                type="date"
-                                                value={filtroDataInicio}
-                                                onChange={(e) => setFiltroDataInicio(e.target.value)}
-                                                className="bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white placeholder-gray-500 focus:border-primary focus:outline-none"
-                                            />
-                                            <span className="text-gray-600">—</span>
-                                            <input
-                                                type="date"
-                                                value={filtroDataFim}
-                                                onChange={(e) => setFiltroDataFim(e.target.value)}
-                                                className="bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-3 text-sm text-white placeholder-gray-500 focus:border-primary focus:outline-none"
-                                            />
+                                        <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
+                                            <span className="text-gray-500 text-xs font-bold uppercase tracking-wider hidden md:inline">Distribuição:</span>
+                                            <div className="flex items-center gap-2 w-full md:w-auto">
+                                                <input
+                                                    type="date"
+                                                    value={filtroDataInicio}
+                                                    onChange={(e) => setFiltroDataInicio(e.target.value)}
+                                                    className="w-full md:w-32 bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-2 text-xs text-center text-white focus:border-primary focus:outline-none"
+                                                />
+                                                <span className="text-gray-600">—</span>
+                                                <input
+                                                    type="date"
+                                                    value={filtroDataFim}
+                                                    onChange={(e) => setFiltroDataFim(e.target.value)}
+                                                    className="w-full md:w-32 bg-[#1e1a14] border border-white/10 rounded-lg h-9 px-2 text-xs text-center text-white focus:border-primary focus:outline-none"
+                                                />
+                                            </div>
                                         </div>
 
                                         {(filtroAdvogado !== 'todos' || filtroConsentimento !== 'todos' || filtroTipoPessoa !== 'todos' || filtroDataInicio || filtroDataFim) && (
@@ -655,7 +657,7 @@ export default function AdminConteudosPage() {
                                                     <div className="col-span-3 text-right">Processo</div>
                                                 </div>
 
-                                                <div className="divide-y divide-white/5 max-h-[60vh] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                                                <div className="divide-y divide-white/5 flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
                                                     {casos.map((caso) => {
                                                         const temConsentimento = !!caso.consentimento_id;
                                                         const isSelected = casoSelecionado?.id === caso.id;
