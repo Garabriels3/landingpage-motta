@@ -816,11 +816,11 @@ export default function AdminConteudosPage() {
                                                             type="checkbox"
                                                             checked={isAllSelected}
                                                             onChange={toggleSelectAll}
-                                                            className="w-4 h-4 rounded border-gray-600 bg-[#2a261f] text-primary focus:ring-primary/50"
+                                                            className="w-4 h-4 rounded border-gray-600 bg-[#2a261f] text-primary focus:ring-primary/50 cursor-pointer"
                                                         />
                                                     </div>
                                                     <div className="col-span-1 text-center">Status</div>
-                                                    <div className="col-span-5">Réu / Nome</div>
+                                                    <div className="col-span-4">Réu / Nome</div>
                                                     <div className="col-span-3">Email</div>
                                                     <div className="col-span-3 text-right">Processo</div>
                                                 </div>
@@ -854,7 +854,7 @@ export default function AdminConteudosPage() {
                                                                             <span className="material-symbols-outlined text-gray-600" title="Aguardando Cadastro">pending</span>
                                                                         )}
                                                                     </div>
-                                                                    <div className="flex-1 md:col-span-5 min-w-0">
+                                                                    <div className="flex-1 md:col-span-4 min-w-0">
                                                                         <div className="text-white font-medium truncate" title={caso.REU}>{caso.REU}</div>
                                                                         {/* Mobile Only Extra Info */}
                                                                         <div className="md:hidden text-xs text-primary font-mono mt-0.5">{caso.NUMERO_PROCESSO}</div>
@@ -1446,7 +1446,8 @@ export default function AdminConteudosPage() {
                                                             const valorAtual = getTextoAtual(conteudo);
                                                             const original = conteudo.texto;
                                                             const modificado = valorAtual !== original;
-                                                            const isLargeText = pageKey === 'legal' || conteudo.tipo === "paragrafo" || valorAtual.length > 80;
+                                                            // Fix: Decide input type based on ORIGINAL content to prevent focus loss during typing
+                                                            const isLargeText = pageKey === 'legal' || conteudo.tipo === "paragrafo" || original.length > 80;
 
                                                             return (
                                                                 <div key={conteudo.id} className="grid md:grid-cols-12 gap-4 items-start">
