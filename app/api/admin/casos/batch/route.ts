@@ -71,29 +71,29 @@ export async function POST(request: Request) {
             const cleanRow = cleanEmptyStrings(rawRow);
 
             // 3. Check for existing record (Composite Key: NUMERO_PROCESSO + REU)
-            const { data: existing, error: searchError } = await supabase
+            // Fix: Use .select() without .maybeSingle() to handle potential duplicates in DB smoothly
+            const { data: existingRecords, error: searchError } = await supabase
                 .from('casos')
                 .select('id')
                 .eq('NUMERO_PROCESSO', cleanRow.NUMERO_PROCESSO)
-                .eq('REU', cleanRow.REU)
-                .maybeSingle();
+                .eq('REU', cleanRow.REU);
 
             if (searchError) {
-                console.error("Search Error:", searchError);
                 console.error("Search Error:", searchError);
                 results.errors.push(`Linha ${rowNumber}: Erro ao verificar duplicidade: ${searchError.message}`);
                 continue;
             }
 
-            if (existing) {
-                // UPDATE
+            if (existingRecords && existingRecords.length > 0) {
+                // UPDATE (Update ALL matching records to ensure consistency)
+                const idsToUpdate = existingRecords.map(r => r.id);
+
                 const { error: updateError } = await supabase
                     .from('casos')
                     .update(cleanRow)
-                    .eq('id', existing.id);
+                    .in('id', idsToUpdate);
 
                 if (updateError) {
-                    console.error("Update Error:", updateError);
                     console.error("Update Error:", updateError);
                     results.errors.push(`Linha ${rowNumber}: Erro ao atualizar: ${updateError.message}`);
                 } else {
