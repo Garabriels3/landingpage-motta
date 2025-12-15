@@ -570,10 +570,10 @@ export default function AdminConteudosPage() {
 
             {/* Sidebar */}
             <aside className={`
-                fixed inset - y - 0 left - 0 z - 50 w - 72 bg - [#2a261f] border - r border - white / 5 flex flex - col justify - between shrink - 0 h - full transition - transform duration - 300 ease -in -out shadow - 2xl md: shadow - none
-md:relative md: translate - x - 0
+                fixed inset-y-0 left-0 z-50 w-72 bg-[#2a261f] border-r border-white/5 flex flex-col justify-between shrink-0 h-full transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
+                md:relative md:translate-x-0
                 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-`}>
+            `}>
                 <div className="flex flex-col gap-6 p-6">
                     {/* Brand */}
                     <div className="flex items-center justify-between mb-4">
