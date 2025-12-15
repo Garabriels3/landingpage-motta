@@ -1423,18 +1423,6 @@ md:relative md: translate - x - 0
                                     </div>
                                 ) : (
                                     <>
-                                        {/* Configuração das páginas para organizar a edição */}
-                                        {/* This definition should ideally be outside the component or at the top level,
-                                            but placing it here as per the instruction's context for the diff. */}
-                                        {/* Assuming PAGINAS_CONFIG is defined elsewhere, this is just an update to its content. */}
-                                        {/* If PAGINAS_CONFIG was not defined, it would be: */}
-                                        {/* const PAGINAS_CONFIG: Record<string, { nome: string; icone: string }> = { ... }; */}
-                                        {/* For the purpose of this edit, I'm assuming it's an existing object being modified. */}
-                                        {/* The instruction implies adding to an existing PAGINAS_CONFIG. */}
-                                        {/* The provided diff snippet places the definition inside the rendering, which is syntactically incorrect for a const. */}
-                                        {/* I will assume PAGINAS_CONFIG is defined at a higher scope and just update its conceptual content. */}
-                                        {/* For the actual code, I'll replace the entire rendering block as instructed. */}
-
                                         {/* Iteração de Páginas */}
                                         {Object.entries(PAGINAS_CONFIG).map(([pageKey, config]) => {
                                             const conteudosDaPagina = conteudosPorPagina[pageKey];
@@ -1523,9 +1511,6 @@ md:relative md: translate - x - 0
                     </>
                 )}
 
-                {/* ========================================
-                    ABA: CADASTROS / CONSENTIMENTOS
-                    ======================================== */}
                 {/* ========================================
                     ABA: CADASTROS / CONSENTIMENTOS
                     ======================================== */}
