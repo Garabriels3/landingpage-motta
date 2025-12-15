@@ -918,7 +918,7 @@ md:relative md: translate - x - 0
                                         </div>
 
                                         {/* Card de Detalhes */}
-                                        <div className={`transition-all duration-300 md:h-full md:flex md:flex-col ${casoSelecionado ? 'fixed inset-0 z-[60] bg-[#1e1a14] md:static md:w-[45%] md:bg-transparent md:z-auto opacity-100 flex flex-col' : 'w-0 opacity-0 hidden'}`}>>
+                                        <div className={`transition-all duration-300 md:h-full md:flex md:flex-col ${casoSelecionado ? 'fixed inset-0 z-[60] bg-[#1e1a14] md:static md:w-[45%] md:bg-transparent md:z-auto opacity-100 flex flex-col' : 'w-0 opacity-0 hidden'}`}>
                                             {casoSelecionado && (
                                                 <div className="bg-[#2a261f] border-b border-white/5 md:rounded-xl md:border md:border-white/5 h-full md:h-full flex flex-col">
                                                     <div className="flex items-center justify-between p-6 border-b border-white/5">
