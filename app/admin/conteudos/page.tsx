@@ -1812,104 +1812,103 @@ export default function AdminConteudosPage() {
                             <div className="p-6 space-y-6">
                                 {!importStats ? (
                                     <>
-                                        <>
-                                            <div className="bg-primary/5 border border-primary/10 rounded-xl p-5 space-y-4">
-                                                <div className="flex items-start gap-3">
-                                                    <span className="material-symbols-outlined text-primary mt-1">info</span>
-                                                    <div className="space-y-3">
-                                                        <h4 className="text-primary font-bold text-lg">Como funciona a importação?</h4>
+                                        <div className="bg-primary/5 border border-primary/10 rounded-xl p-5 space-y-4">
+                                            <div className="flex items-start gap-3">
+                                                <span className="material-symbols-outlined text-primary mt-1">info</span>
+                                                <div className="space-y-3">
+                                                    <h4 className="text-primary font-bold text-lg">Como funciona a importação?</h4>
 
-                                                        <div className="text-sm text-gray-300 space-y-2 leading-relaxed">
-                                                            <p>
-                                                                <strong className="text-white">Atualização Automática:</strong> Você pode enviar a mesma planilha várias vezes. Se o sistema encontrar um caso com o mesmo <strong>Número de Processo</strong> e <strong>Réu</strong>, ele atualizará os dados existentes. Se não encontrar, criará um novo caso.
-                                                            </p>
-                                                            <p>
-                                                                <strong className="text-white">Obrigatório:</strong> As colunas <strong>NUMERO_PROCESSO</strong> e <strong>REU</strong> precisam estar preenchidas. O restante é opcional.
-                                                            </p>
-                                                        </div>
+                                                    <div className="text-sm text-gray-300 space-y-2 leading-relaxed">
+                                                        <p>
+                                                            <strong className="text-white">Atualização Automática:</strong> Você pode enviar a mesma planilha várias vezes. Se o sistema encontrar um caso com o mesmo <strong>Número de Processo</strong> e <strong>Réu</strong>, ele atualizará os dados existentes. Se não encontrar, criará um novo caso.
+                                                        </p>
+                                                        <p>
+                                                            <strong className="text-white">Obrigatório:</strong> As colunas <strong>NUMERO_PROCESSO</strong> e <strong>REU</strong> precisam estar preenchidas. O restante é opcional.
+                                                        </p>
                                                     </div>
-                                                </div>
-
-                                                <div className="pt-2">
-                                                    <button
-                                                        onClick={downloadTemplate}
-                                                        className="w-full bg-[#2a261f] hover:bg-[#332d25] border border-primary/30 hover:border-primary text-primary hover:text-white font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2 group"
-                                                    >
-                                                        <span className="material-symbols-outlined group-hover:animate-bounce">download</span>
-                                                        BAIXAR MODELO DE PLANILHA (Completo)
-                                                    </button>
-                                                    <p className="text-center text-xs text-gray-500 mt-2">
-                                                        Use este modelo para garantir que todas as colunas estejam corretas.
-                                                    </p>
                                                 </div>
                                             </div>
 
-                                            <div className="border-2 border-dashed border-white/10 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-white/5 transition-colors cursor-pointer relative">
-                                                <input
-                                                    type="file"
-                                                    accept=".csv"
-                                                    onChange={handleFileUpload}
-                                                    disabled={importing}
-                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                                                />
-                                                {importing ? (
-                                                    <div className="flex flex-col items-center gap-3">
-                                                        <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                                                        <p className="text-gray-400">Processando arquivo...</p>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <span className="material-symbols-outlined text-gray-500 text-4xl mb-2">cloud_upload</span>
-                                                        <p className="text-white font-medium">Clique ou arraste seu arquivo CSV</p>
-                                                        <p className="text-xs text-gray-500 mt-1">Apenas arquivos .csv</p>
-                                                    </>
-                                                )}
+                                            <div className="pt-2">
+                                                <button
+                                                    onClick={downloadTemplate}
+                                                    className="w-full bg-[#2a261f] hover:bg-[#332d25] border border-primary/30 hover:border-primary text-primary hover:text-white font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2 group"
+                                                >
+                                                    <span className="material-symbols-outlined group-hover:animate-bounce">download</span>
+                                                    BAIXAR MODELO DE PLANILHA (Completo)
+                                                </button>
+                                                <p className="text-center text-xs text-gray-500 mt-2">
+                                                    Use este modelo para garantir que todas as colunas estejam corretas.
+                                                </p>
                                             </div>
-                                        </>
-                                        ) : (
-                                        <div className="space-y-4">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl text-center">
-                                                    <div className="text-2xl font-bold text-emerald-500">{importStats.inserted}</div>
-                                                    <div className="text-xs text-emerald-400 uppercase font-bold tracking-wider">Novos</div>
-                                                </div>
-                                                <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl text-center">
-                                                    <div className="text-2xl font-bold text-blue-500">{importStats.updated}</div>
-                                                    <div className="text-xs text-blue-400 uppercase font-bold tracking-wider">Atualizados</div>
-                                                </div>
-                                            </div>
-
-                                            {importStats.errors.length > 0 && (
-                                                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-                                                    <h4 className="text-red-400 font-bold text-sm mb-2 flex items-center gap-2">
-                                                        <span className="material-symbols-outlined text-[18px]">warning</span>
-                                                        Erros ({importStats.errors.length})
-                                                    </h4>
-                                                    <div className="max-h-32 overflow-y-auto text-xs text-red-300 space-y-1">
-                                                        {importStats.errors.map((err, idx) => (
-                                                            <div key={idx} className="border-b border-red-500/10 pb-1 last:border-0">{err}</div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <button
-                                                onClick={() => {
-                                                    setImportStats(null);
-                                                    setShowImportModal(false);
-                                                }}
-                                                className="w-full h-12 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors"
-                                            >
-                                                Concluir
-                                            </button>
                                         </div>
-                                )}
+
+                                        <div className="border-2 border-dashed border-white/10 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-white/5 transition-colors cursor-pointer relative">
+                                            <input
+                                                type="file"
+                                                accept=".csv"
+                                                onChange={handleFileUpload}
+                                                disabled={importing}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                            />
+                                            {importing ? (
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                                    <p className="text-gray-400">Processando arquivo...</p>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <span className="material-symbols-outlined text-gray-500 text-4xl mb-2">cloud_upload</span>
+                                                    <p className="text-white font-medium">Clique ou arraste seu arquivo CSV</p>
+                                                    <p className="text-xs text-gray-500 mt-1">Apenas arquivos .csv</p>
+                                                </>
+                                            )}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl text-center">
+                                                <div className="text-2xl font-bold text-emerald-500">{importStats.inserted}</div>
+                                                <div className="text-xs text-emerald-400 uppercase font-bold tracking-wider">Novos</div>
+                                            </div>
+                                            <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl text-center">
+                                                <div className="text-2xl font-bold text-blue-500">{importStats.updated}</div>
+                                                <div className="text-xs text-blue-400 uppercase font-bold tracking-wider">Atualizados</div>
+                                            </div>
+                                        </div>
+
+                                        {importStats.errors.length > 0 && (
+                                            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+                                                <h4 className="text-red-400 font-bold text-sm mb-2 flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-[18px]">warning</span>
+                                                    Erros ({importStats.errors.length})
+                                                </h4>
+                                                <div className="max-h-32 overflow-y-auto text-xs text-red-300 space-y-1">
+                                                    {importStats.errors.map((err, idx) => (
+                                                        <div key={idx} className="border-b border-red-500/10 pb-1 last:border-0">{err}</div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <button
+                                            onClick={() => {
+                                                setImportStats(null);
+                                                setShowImportModal(false);
+                                            }}
+                                            className="w-full h-12 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                                        >
+                                            Concluir
+                                        </button>
                                     </div>
+                                )}
                             </div>
                         </div>
-                        )
+                    </div>
+                )
             }
-                    </div >
-                );
+        </div >
+    );
 }
 
