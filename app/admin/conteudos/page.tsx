@@ -602,30 +602,30 @@ md:relative md: translate - x - 0
                     <nav className="flex flex-col gap-2">
                         <button
                             onClick={() => { setActiveTab("textos"); setMobileMenuOpen(false); }}
-                            className={`flex items - center gap - 3 h - 12 px - 4 rounded - xl text - sm font - medium transition - all ${activeTab === "textos"
+                            className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "textos"
                                 ? "bg-primary text-black shadow-lg shadow-primary/20"
                                 : "text-gray-400 hover:text-white hover:bg-white/5"
-                                } `}
+                                }`}
                         >
                             <span className="material-symbols-outlined">edit_document</span>
                             Gerenciar Textos
                         </button>
                         <button
                             onClick={() => { setActiveTab("casos"); setMobileMenuOpen(false); }}
-                            className={`flex items - center gap - 3 h - 12 px - 4 rounded - xl text - sm font - medium transition - all ${activeTab === "casos"
+                            className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "casos"
                                 ? "bg-primary text-black shadow-lg shadow-primary/20"
                                 : "text-gray-400 hover:text-white hover:bg-white/5"
-                                } `}
+                                }`}
                         >
                             <span className="material-symbols-outlined">folder_managed</span>
                             Gestão de Casos
                         </button>
                         <button
                             onClick={() => { setActiveTab("cadastros"); setMobileMenuOpen(false); }}
-                            className={`flex items - center gap - 3 h - 12 px - 4 rounded - xl text - sm font - medium transition - all ${activeTab === "cadastros"
+                            className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "cadastros"
                                 ? "bg-primary text-black shadow-lg shadow-primary/20"
                                 : "text-gray-400 hover:text-white hover:bg-white/5"
-                                } `}
+                                }`}
                         >
                             <span className="material-symbols-outlined">group</span>
                             Cadastros Recebidos
@@ -808,7 +808,7 @@ md:relative md: translate - x - 0
                                 ) : (
                                     <div className="flex gap-6 md:h-full">
                                         {/* Lista de casos */}
-                                        <div className={`transition - all duration - 300 md: h - full md:flex md: flex - col ${casoSelecionado ? 'hidden md:block md:w-[55%]' : 'w-full'} `}>
+                                        <div className={`transition-all duration-300 md:h-full md:flex md:flex-col ${casoSelecionado ? 'hidden md:block md:w-[55%]' : 'w-full'}`}>
                                             <div className="bg-[#2a261f] rounded-xl border border-white/5 overflow-hidden md:h-full md:flex md:flex-col">
                                                 <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-[#1e1a14] border-b border-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider items-center">
                                                     <div className="col-span-1 flex justify-center">
@@ -834,7 +834,7 @@ md:relative md: translate - x - 0
                                                             <div
                                                                 key={caso.id}
                                                                 onClick={() => setCasoSelecionado(isSelected ? null : caso)}
-                                                                className={`flex flex - col md:grid md: grid - cols - 12 gap - 3 md: gap - 4 px - 6 py - 4 cursor - pointer transition - all md: items - center border - b border - white / 5 md: border - b - 0 ${isSelected ? 'bg-primary/10 border-l-4 border-primary' : 'hover:bg-white/5'} `}
+                                                                className={`flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 px-6 py-4 cursor-pointer transition-all md:items-center border-b border-white/5 md:border-b-0 ${isSelected ? 'bg-primary/10 border-l-4 border-primary' : 'hover:bg-white/5'}`}
                                                             >
                                                                 {/* Checkbox (Mobile & Desktop) */}
                                                                 <div className="md:col-span-1 flex md:justify-center" onClick={(e) => e.stopPropagation()}>
@@ -918,7 +918,7 @@ md:relative md: translate - x - 0
                                         </div>
 
                                         {/* Card de Detalhes */}
-                                        <div className={`transition - all duration - 300 md: h - full md:flex md: flex - col ${casoSelecionado ? 'fixed inset-0 z-[60] bg-[#1e1a14] md:static md:w-[45%] md:bg-transparent md:z-auto opacity-100 flex flex-col' : 'w-0 opacity-0 hidden'} `}>
+                                        <div className={`transition-all duration-300 md:h-full md:flex md:flex-col ${casoSelecionado ? 'fixed inset-0 z-[60] bg-[#1e1a14] md:static md:w-[45%] md:bg-transparent md:z-auto opacity-100 flex flex-col' : 'w-0 opacity-0 hidden'}`}>>
                                             {casoSelecionado && (
                                                 <div className="bg-[#2a261f] border-b border-white/5 md:rounded-xl md:border md:border-white/5 h-full md:h-full flex flex-col">
                                                     <div className="flex items-center justify-between p-6 border-b border-white/5">
@@ -1386,10 +1386,10 @@ md:relative md: translate - x - 0
                                 <div className="flex gap-2 mt-6 overflow-x-auto pb-2 w-full touch-pan-x snap-x">
                                     <button
                                         onClick={() => setFiltroPagina("all")}
-                                        className={`px - 4 py - 2 rounded - full text - xs font - bold uppercase tracking - wider whitespace - nowrap transition - colors ${filtroPagina === "all"
+                                        className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${filtroPagina === "all"
                                             ? "bg-white text-black"
                                             : "bg-[#2a261f] text-gray-400 hover:text-white hover:bg-[#332d25]"
-                                            } `}
+                                            }`}
                                     >
                                         Todos
                                     </button>
@@ -1397,10 +1397,10 @@ md:relative md: translate - x - 0
                                         <button
                                             key={key}
                                             onClick={() => setFiltroPagina(key)}
-                                            className={`px - 4 py - 2 rounded - full text - xs font - bold uppercase tracking - wider whitespace - nowrap transition - colors ${filtroPagina === key
+                                            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${filtroPagina === key
                                                 ? "bg-white text-black"
                                                 : "bg-[#2a261f] text-gray-400 hover:text-white hover:bg-[#332d25]"
-                                                } `}
+                                                }`}
                                         >
                                             {PAGINAS_CONFIG[key].nome}
                                         </button>
@@ -1474,14 +1474,14 @@ md:relative md: translate - x - 0
                                                                                 value={valorAtual}
                                                                                 onChange={(e) => handleTextoChange(conteudo.chave, e.target.value)}
                                                                                 rows={pageKey === 'legal' ? 20 : 6}
-                                                                                className={`w - full bg - [#1e1a14] border rounded - lg p - 3 text - sm text - white placeholder - gray - 600 focus: border - primary focus: outline - none transition - all font - mono leading - relaxed ${modificado ? "border-primary/50 bg-primary/5" : "border-white/10"} `}
+                                                                                className={`w-full bg-[#1e1a14] border rounded-lg p-3 text-sm text-white placeholder-gray-600 focus:border-primary focus:outline-none transition-all font-mono leading-relaxed ${modificado ? "border-primary/50 bg-primary/5" : "border-white/10"}`}
                                                                             />
                                                                         ) : (
                                                                             <input
                                                                                 type="text"
                                                                                 value={valorAtual}
                                                                                 onChange={(e) => handleTextoChange(conteudo.chave, e.target.value)}
-                                                                                className={`w - full bg - [#1e1a14] border rounded - lg h - 10 px - 4 text - sm text - white placeholder - gray - 600 focus: border - primary focus: outline - none transition - all ${modificado ? "border-primary/50 bg-primary/5" : "border-white/10"} `}
+                                                                                className={`w-full bg-[#1e1a14] border rounded-lg h-10 px-4 text-sm text-white placeholder-gray-600 focus:border-primary focus:outline-none transition-all ${modificado ? "border-primary/50 bg-primary/5" : "border-white/10"}`}
                                                                             />
                                                                         )}
 
