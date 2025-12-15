@@ -360,7 +360,7 @@ export default function AdminConteudosPage() {
         setCarregando(true);
         try {
             const url = filtroPagina !== "all"
-                ? `/ api / admin / conteudos ? pagina = ${encodeURIComponent(filtroPagina)} `
+                ? `/api/admin/conteudos?pagina=${encodeURIComponent(filtroPagina)}`
                 : "/api/admin/conteudos";
 
             const response = await fetch(url, {
@@ -435,7 +435,7 @@ export default function AdminConteudosPage() {
             if (filtroDataFimCad) params.append("dataFim", filtroDataFimCad);
             if (filtroCampaignCad) params.append("campaign", filtroCampaignCad);
 
-            const response = await fetch(`/ api / admin / consentimentos ? ${params.toString()} `, {
+            const response = await fetch(`/api/admin/consentimentos?${params.toString()}`, {
                 cache: 'no-store',
             });
             if (response.ok) {
@@ -478,7 +478,7 @@ export default function AdminConteudosPage() {
             if (filtroDataInicio) params.append("data_inicio", filtroDataInicio);
             if (filtroDataFim) params.append("data_fim", filtroDataFim);
 
-            const response = await fetch(`/ api / admin / casos ? ${params.toString()} `, {
+            const response = await fetch(`/api/admin/casos?${params.toString()}`, {
                 cache: 'no-store',
             });
 
