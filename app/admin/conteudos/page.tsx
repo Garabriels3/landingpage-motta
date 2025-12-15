@@ -300,17 +300,16 @@ export default function AdminConteudosPage() {
     // Função: Baixar Modelo CSV
     const downloadTemplate = () => {
         const headers = [
-            "NUMERO_PROCESSO", "REU", "DOC_REU", "EMAIL",
-            "FONE1", "DDD1", "FONE2", "DDD2", "FONE3", "DDD3", "FONE4", "DDD4",
-            "ENDERECO", "TIPO_LOGR", "TITULO_LOGR", "LOGRADOURO", "NUMERO", "COMPLEMENTO", "BAIRRO", "CIDADE", "UF", "CEP",
-            "DATA_NASCIMENTO", "NOME_MAE", "SITUACAO_RECEITA", "CBO_CNAE", "SIGNO_NJUR", "RENDA_FATURAMENTO_PRESUMIDO",
-            "VALOR_CAUSA", "TIPO_PROCESSO", "ASSUNTO", "AUTOR", "STATUS_PROCESSO",
-            "DATA_DISTRIBUICAO", "DATA_AUDIENCIA",
-            "TRIBUNAL", "FORUM", "VARA", "COMARCA", "INSTANCIA", "PROCESSO_ELETRONICO",
-            "ADVOGADO", "OAB", "LINK_DOCUMENTOS", "TERMO_PESQUISADO", "OBSERVACOES",
-            "SOCIO1_NOME_RAZAO", "SOCIO1_DOC", "SOCIO1_TEL", "SOCIO1_EMAIL",
-            "SOCIO2_NOME_RAZAO", "SOCIO2_DOC", "SOCIO2_TEL", "SOCIO2_EMAIL",
-            "SOCIO3_NOME_RAZAO", "SOCIO3_DOC", "SOCIO3_TEL", "SOCIO3_EMAIL"
+            "DATA_DISTRIBUICAO", "TERMO_PESQUISADO", "TRIBUNAL", "NUMERO_PROCESSO", "TIPO_PROCESSO", "REU", "AUTOR",
+            "FORUM", "VARA", "CIDADE_REU", "UF_REU", "VALOR", "ADVOGADO", "DATA_AUDIENCIA", "PROCESSO_ELETRONICO",
+            "INSTANCIA", "LINK_DOCUMENTOS", "ASSUNTO", "TIPO_DOC", "DOC_REU", "NOME_RAZAO", "NOME_MAE_FANTASIA",
+            "DT_NASC_ABERTURA", "SITUACAO_RECEITA", "SEXO_PORTE", "RENDA_FATURAMENTO_PRESUMIDO", "CBO_CNAE",
+            "ESTADO_CIVIL_MATRIZ", "SIGNO_NJUR", "EMAIL", "ENDERECO", "TIPO_LOGR", "TITULO_LOGR",
+            "LOGRADOURO", "NUMERO", "COMPLEMENTO", "BAIRRO", "CIDADE", "UF", "CEP",
+            "DDD1", "FONE1", "DDD2", "FONE2", "DDD3", "FONE3", "DDD4", "FONE4",
+            "SOCIO1_DOC", "SOCIO1_NOME_RAZAO", "SOCIO1_TEL", "SOCIO1_EMAIL",
+            "SOCIO2_DOC", "SOCIO2_NOME_RAZAO", "SOCIO2_TEL", "SOCIO2_EMAIL",
+            "SOCIO3_DOC", "SOCIO3_NOME_RAZAO", "SOCIO3_TEL", "SOCIO3_EMAIL"
         ];
         const csvContent = headers.join(",") + "\n";
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
