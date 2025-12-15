@@ -80,7 +80,8 @@ export async function POST(request: Request) {
 
             if (searchError) {
                 console.error("Search Error:", searchError);
-                results.errors.push(`Linha ${rowNumber}: Erro ao verificar duplicidade.`);
+                console.error("Search Error:", searchError);
+                results.errors.push(`Linha ${rowNumber}: Erro ao verificar duplicidade: ${searchError.message}`);
                 continue;
             }
 
@@ -93,7 +94,8 @@ export async function POST(request: Request) {
 
                 if (updateError) {
                     console.error("Update Error:", updateError);
-                    results.errors.push(`Linha ${rowNumber}: Erro ao atualizar.`);
+                    console.error("Update Error:", updateError);
+                    results.errors.push(`Linha ${rowNumber}: Erro ao atualizar: ${updateError.message}`);
                 } else {
                     results.updated++;
                 }
@@ -105,7 +107,8 @@ export async function POST(request: Request) {
 
                 if (insertError) {
                     console.error("Insert Error:", insertError);
-                    results.errors.push(`Linha ${rowNumber}: Erro ao inserir.`);
+                    console.error("Insert Error:", insertError);
+                    results.errors.push(`Linha ${rowNumber}: Erro ao inserir: ${insertError.message}`);
                 } else {
                     results.inserted++;
                 }
