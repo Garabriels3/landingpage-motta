@@ -634,8 +634,8 @@ export default function AdminConteudosPage() {
                             </div>
                         </header>
 
-                        <div className="flex-1 overflow-y-auto p-6" style={{ scrollbarWidth: 'thin', scrollbarColor: '#332d25 #1e1a14' }}>
-                            <div className="max-w-6xl mx-auto w-full pb-20">
+                        <div className="flex-1 overflow-y-auto md:overflow-hidden p-6" style={{ scrollbarWidth: 'thin', scrollbarColor: '#332d25 #1e1a14' }}>
+                            <div className="max-w-6xl mx-auto w-full pb-20 md:pb-0 md:h-full md:flex md:flex-col">
                                 {carregandoCasos ? (
                                     <div className="flex items-center justify-center py-20">
                                         <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -646,10 +646,10 @@ export default function AdminConteudosPage() {
                                         <p className="text-gray-400">Nenhum caso encontrado.</p>
                                     </div>
                                 ) : (
-                                    <div className="flex gap-6">
+                                    <div className="flex gap-6 md:h-full">
                                         {/* Lista de casos */}
-                                        <div className={`transition-all duration-300 ${casoSelecionado ? 'hidden md:block md:w-[55%]' : 'w-full'}`}>
-                                            <div className="bg-[#2a261f] rounded-xl border border-white/5 overflow-hidden">
+                                        <div className={`transition-all duration-300 md:h-full md:flex md:flex-col ${casoSelecionado ? 'hidden md:block md:w-[55%]' : 'w-full'}`}>
+                                            <div className="bg-[#2a261f] rounded-xl border border-white/5 overflow-hidden md:h-full md:flex md:flex-col">
                                                 <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-[#1e1a14] border-b border-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider">
                                                     <div className="col-span-1 text-center">Status</div>
                                                     <div className="col-span-5">Réu / Nome</div>
@@ -741,9 +741,9 @@ export default function AdminConteudosPage() {
                                         </div>
 
                                         {/* Card de Detalhes */}
-                                        <div className={`transition-all duration-300 ${casoSelecionado ? 'fixed inset-0 z-[60] bg-[#1e1a14] md:static md:w-[45%] md:bg-transparent md:z-auto opacity-100 flex flex-col' : 'w-0 opacity-0 hidden'}`}>
+                                        <div className={`transition-all duration-300 md:h-full md:flex md:flex-col ${casoSelecionado ? 'fixed inset-0 z-[60] bg-[#1e1a14] md:static md:w-[45%] md:bg-transparent md:z-auto opacity-100 flex flex-col' : 'w-0 opacity-0 hidden'}`}>
                                             {casoSelecionado && (
-                                                <div className="bg-[#2a261f] border-b border-white/5 md:rounded-xl md:border md:border-white/5 h-full md:sticky md:top-6 md:h-fit md:max-h-[85vh] flex flex-col">
+                                                <div className="bg-[#2a261f] border-b border-white/5 md:rounded-xl md:border md:border-white/5 h-full md:h-full flex flex-col">
                                                     <div className="flex items-center justify-between p-6 border-b border-white/5">
                                                         <h3 className="text-lg font-bold text-white">Detalhes do Caso</h3>
                                                         <button
