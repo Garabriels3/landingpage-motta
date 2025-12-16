@@ -1159,6 +1159,12 @@ export default function AdminConteudosPage() {
                                                                         <p className="text-gray-300 mt-1">{casoSelecionado.AUTOR}</p>
                                                                     </div>
                                                                 )}
+                                                                {casoSelecionado.ADVOGADO && (
+                                                                    <div>
+                                                                        <label className="text-xs text-gray-500 uppercase tracking-wider text-amber-500/80">⚖️ Advogado do Autor</label>
+                                                                        <p className="text-gray-300 mt-1">{casoSelecionado.ADVOGADO}</p>
+                                                                    </div>
+                                                                )}
                                                                 {casoSelecionado.VALOR && (
                                                                     <div>
                                                                         <label className="text-xs text-gray-500 uppercase tracking-wider">Valor da Causa</label>
@@ -1227,19 +1233,14 @@ export default function AdminConteudosPage() {
                                                         )}
 
                                                         {/* ========== SEÇÃO 7: ADVOGADO + LINK ========== */}
-                                                        {(casoSelecionado.ADVOGADO || casoSelecionado.LINK_DOCUMENTOS || casoSelecionado.TERMO_PESQUISADO) && (
+                                                        {/* ========== SEÇÃO 7: DOCUMENTOS ========== */}
+                                                        {(casoSelecionado.LINK_DOCUMENTOS || casoSelecionado.TERMO_PESQUISADO) && (
                                                             <div className="pt-4 border-t border-white/10">
                                                                 <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
-                                                                    <span className="material-symbols-outlined text-[18px]">work</span>
-                                                                    Advogado / Documentos
+                                                                    <span className="material-symbols-outlined text-[18px]">folder_open</span>
+                                                                    Documentos / Pesquisa
                                                                 </h4>
                                                                 <div className="space-y-2">
-                                                                    {casoSelecionado.ADVOGADO && (
-                                                                        <div>
-                                                                            <label className="text-xs text-gray-500 uppercase tracking-wider">Advogado</label>
-                                                                            <p className="text-gray-300 mt-1">{casoSelecionado.ADVOGADO}</p>
-                                                                        </div>
-                                                                    )}
                                                                     {casoSelecionado.TERMO_PESQUISADO && (
                                                                         <div>
                                                                             <label className="text-xs text-gray-500 uppercase tracking-wider">Termo Pesquisado</label>
