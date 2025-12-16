@@ -165,6 +165,11 @@ export default function AdminConteudosPage() {
     const [casoSelecionado, setCasoSelecionado] = useState<Caso | null>(null);
     const [paginaCasos, setPaginaCasos] = useState(0);
 
+    // Estados Advogado Réu
+    const [editingAdvogadoReu, setEditingAdvogadoReu] = useState(false);
+    const [advogadoReuValue, setAdvogadoReuValue] = useState("");
+    const [savingAdvogadoReu, setSavingAdvogadoReu] = useState(false);
+
     // Estados - Filtros Casos
     const [filtroAdvogado, setFiltroAdvogado] = useState<'todos' | 'com_advogado' | 'sem_advogado'>('todos');
     const [filtroConsentimento, setFiltroConsentimento] = useState<'todos' | 'com_consentimento' | 'sem_consentimento'>('todos');
@@ -295,6 +300,36 @@ export default function AdminConteudosPage() {
                 setImporting(false);
             }
         });
+    };
+
+    // Função: Atualizar Advogado do Réu
+    const handleUpdateAdvogadoReu = async () => {
+        if (!casoSelecionado) return;
+
+        setSavingAdvogadoReu(true);
+        try {
+            const res = await fetch(`/api/admin/casos/${casoSelecionado.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ADVOGADO_REU: advogadoReuValue })
+            });
+
+            if (!res.ok) throw new Error("Erro ao atualizar");
+
+            const { data } = await res.json();
+
+            // Atualizar estado local
+            setCasoSelecionado(prev => prev ? { ...prev, ADVOGADO_REU: data.ADVOGADO_REU } : null);
+            setCasos(prev => prev.map(c => c.id === data.id ? { ...c, ADVOGADO_REU: data.ADVOGADO_REU } : c));
+
+            setEditingAdvogadoReu(false);
+            alert("Status da defesa atualizado com sucesso!");
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao salvar advogado.");
+        } finally {
+            setSavingAdvogadoReu(false);
+        }
     };
 
     // Função: Baixar Modelo CSV
@@ -997,6 +1032,77 @@ export default function AdminConteudosPage() {
                                                                     )}
                                                                 </div>
                                                             </div>
+                                                        </div>
+
+
+                                                        {/* ========== SEÇÃO 1.5: STATUS DA DEFESA (NOVO) ========== */}
+                                                        <div className="pt-4 border-t border-white/10">
+                                                            <div className="flex items-center justify-between mb-3">
+                                                                <h4 className="text-sm font-bold text-primary flex items-center gap-2">
+                                                                    <span className="material-symbols-outlined text-[18px]">shield</span>
+                                                                    Status da Defesa
+                                                                </h4>
+                                                                {!editingAdvogadoReu && (
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setAdvogadoReuValue(casoSelecionado.ADVOGADO_REU || "");
+                                                                            setEditingAdvogadoReu(true);
+                                                                        }}
+                                                                        className="text-xs font-bold text-emerald-500 hover:text-emerald-400 flex items-center gap-1 transition-colors"
+                                                                    >
+                                                                        <span className="material-symbols-outlined text-[14px]">edit</span>
+                                                                        {casoSelecionado.ADVOGADO_REU ? "Editar Advogado" : "Adicionar Advogado"}
+                                                                    </button>
+                                                                )}
+                                                            </div>
+
+                                                            {editingAdvogadoReu ? (
+                                                                <div className="bg-white/5 p-3 rounded-lg border border-primary/20 animate-in fade-in slide-in-from-top-2">
+                                                                    <label className="text-xs text-gray-500 uppercase tracking-wider block mb-2">
+                                                                        ⚖️ Nome do Advogado de Defesa
+                                                                    </label>
+                                                                    <div className="flex gap-2">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={advogadoReuValue}
+                                                                            onChange={(e) => setAdvogadoReuValue(e.target.value)}
+                                                                            placeholder="Digite o nome do advogado..."
+                                                                            className="flex-1 bg-black/40 border border-white/10 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary/50"
+                                                                            autoFocus
+                                                                        />
+                                                                        <button
+                                                                            onClick={handleUpdateAdvogadoReu}
+                                                                            disabled={savingAdvogadoReu}
+                                                                            className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 rounded text-white text-xs font-bold disabled:opacity-50"
+                                                                        >
+                                                                            {savingAdvogadoReu ? "..." : "Salvar"}
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => setEditingAdvogadoReu(false)}
+                                                                            className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-white text-xs transition-colors"
+                                                                        >
+                                                                            Cancelar
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className={`p-3 rounded-lg border ${casoSelecionado.ADVOGADO_REU ? 'bg-purple-500/10 border-purple-500/20' : 'bg-gray-800/30 border-white/5'}`}>
+                                                                    {casoSelecionado.ADVOGADO_REU ? (
+                                                                        <div>
+                                                                            <label className="text-xs text-purple-400 uppercase tracking-wider font-bold mb-1 block">Advogado Constituído</label>
+                                                                            <p className="text-white font-medium flex items-center gap-2">
+                                                                                <span className="material-symbols-outlined text-purple-500 text-[16px]">verified</span>
+                                                                                {casoSelecionado.ADVOGADO_REU}
+                                                                            </p>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex items-center gap-2 text-gray-500 italic text-sm">
+                                                                            <span className="material-symbols-outlined text-[16px]">error_outline</span>
+                                                                            Advogado de defesa não informado
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         {/* ========== SEÇÃO 2: SITUAÇÃO RECEITA (PJ) ========== */}

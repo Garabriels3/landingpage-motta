@@ -76,6 +76,7 @@ export interface Caso {
     STATUS_PROCESSO?: string;
     DATA_DISTRIBUICAO?: string;
     ADVOGADO?: string;
+    ADVOGADO_REU?: string; // Advogado de defesa (Réu)
     OAB?: string;
     OBSERVACOES?: string;
     consentimento_id?: string;
