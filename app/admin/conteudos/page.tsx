@@ -923,6 +923,12 @@ export default function AdminConteudosPage() {
                                                                             </span>
                                                                         )}
 
+                                                                        {caso.ADVOGADO_REU && (
+                                                                            <span className="text-xs text-purple-400 flex items-center gap-1 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20" title={`Defesa: ${caso.ADVOGADO_REU}`}>
+                                                                                <span className="material-symbols-outlined text-[14px]">shield</span>
+                                                                                Defesa
+                                                                            </span>
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             </div>
