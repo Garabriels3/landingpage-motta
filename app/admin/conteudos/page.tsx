@@ -887,12 +887,7 @@ export default function AdminConteudosPage() {
                                                                                 {new Date(caso.DATA_DISTRIBUICAO).toLocaleDateString('pt-BR')}
                                                                             </span>
                                                                         )}
-                                                                        {caso.ADVOGADO && (
-                                                                            <span className="text-xs text-amber-500 flex items-center gap-1 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20" title={`Advogado: ${caso.ADVOGADO} `}>
-                                                                                <span className="material-symbols-outlined text-[14px]">gavel</span>
-                                                                                Adv.
-                                                                            </span>
-                                                                        )}
+
                                                                     </div>
                                                                 </div>
                                                             </div>
