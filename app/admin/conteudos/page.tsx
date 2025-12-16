@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Papa from "papaparse";
+import SnakeGame from "@/components/SnakeGame";
 
 // Tipo para o CSV
 interface CSVRow {
@@ -186,6 +187,10 @@ export default function AdminConteudosPage() {
     const [showImportModal, setShowImportModal] = useState(false);
     const [importing, setImporting] = useState(false);
     const [importStats, setImportStats] = useState<{ inserted: number, updated: number, errors: string[] } | null>(null);
+
+    // Easter Egg State
+    const [easterEggCount, setEasterEggCount] = useState(0);
+    const [showSnakeGame, setShowSnakeGame] = useState(false);
 
 
     // ============================================
@@ -623,74 +628,86 @@ export default function AdminConteudosPage() {
                 <div className="flex flex-col gap-6 p-6">
                     {/* Brand */}
                     <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-md border border-white/10">
-                                <span className="text-black font-bold text-lg">W</span>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <div
+                                    onClick={() => {
+                                        if (showSnakeGame) return;
+                                        const newCount = easterEggCount + 1;
+                                        setEasterEggCount(newCount);
+                                        if (newCount >= 10) {
+                                            setShowSnakeGame(true);
+                                            setEasterEggCount(0);
+                                        }
+                                    }}
+                                    className={`w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-md border border-white/10 cursor-pointer select-none active:scale-95 transition-transform ${easterEggCount > 0 ? 'hover:scale-105' : ''}`}
+                                >
+                                    <span className="text-black font-bold text-lg">W</span>
+                                </div>
+                                <div>
+                                    <h1 className="text-white text-base font-semibold leading-tight tracking-tight">
+                                        Wagner Chaves
+                                    </h1>
+                                    <p className="text-primary text-xs font-medium">Painel Admin</p>
+                                </div>
                             </div>
-                            <div>
-                                <h1 className="text-white text-base font-semibold leading-tight tracking-tight">
-                                    Wagner Chaves
-                                </h1>
-                                <p className="text-primary text-xs font-medium">Painel Admin</p>
-                            </div>
+
+                            {/* Mobile Close Button */}
+                            <button
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                            >
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
                         </div>
 
-                        {/* Mobile Close Button */}
-                        <button
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                        >
-                            <span className="material-symbols-outlined">close</span>
-                        </button>
+                        {/* Navigation */}
+                        <nav className="flex flex-col gap-2">
+                            <button
+                                onClick={() => { setActiveTab("textos"); setMobileMenuOpen(false); }}
+                                className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "textos"
+                                    ? "bg-primary text-black shadow-lg shadow-primary/20"
+                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    }`}
+                            >
+                                <span className="material-symbols-outlined">edit_document</span>
+                                Gerenciar Textos
+                            </button>
+                            <button
+                                onClick={() => { setActiveTab("casos"); setMobileMenuOpen(false); }}
+                                className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "casos"
+                                    ? "bg-primary text-black shadow-lg shadow-primary/20"
+                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    }`}
+                            >
+                                <span className="material-symbols-outlined">folder_managed</span>
+                                Gestão de Casos
+                            </button>
+                            <button
+                                onClick={() => { setActiveTab("cadastros"); setMobileMenuOpen(false); }}
+                                className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "cadastros"
+                                    ? "bg-primary text-black shadow-lg shadow-primary/20"
+                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    }`}
+                            >
+                                <span className="material-symbols-outlined">group</span>
+                                Cadastros Recebidos
+                            </button>
+                        </nav>
                     </div>
 
-                    {/* Navigation */}
-                    <nav className="flex flex-col gap-2">
+                    <div className="p-6 border-t border-white/5">
                         <button
-                            onClick={() => { setActiveTab("textos"); setMobileMenuOpen(false); }}
-                            className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "textos"
-                                ? "bg-primary text-black shadow-lg shadow-primary/20"
-                                : "text-gray-400 hover:text-white hover:bg-white/5"
-                                }`}
+                            onClick={async () => {
+                                await fetch("/api/admin/logout", { method: "POST" });
+                                router.push("/admin/login");
+                            }}
+                            className="flex items-center gap-3 h-12 px-4 w-full rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
                         >
-                            <span className="material-symbols-outlined">edit_document</span>
-                            Gerenciar Textos
+                            <span className="material-symbols-outlined">logout</span>
+                            Sair do Painel
                         </button>
-                        <button
-                            onClick={() => { setActiveTab("casos"); setMobileMenuOpen(false); }}
-                            className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "casos"
-                                ? "bg-primary text-black shadow-lg shadow-primary/20"
-                                : "text-gray-400 hover:text-white hover:bg-white/5"
-                                }`}
-                        >
-                            <span className="material-symbols-outlined">folder_managed</span>
-                            Gestão de Casos
-                        </button>
-                        <button
-                            onClick={() => { setActiveTab("cadastros"); setMobileMenuOpen(false); }}
-                            className={`flex items-center gap-3 h-12 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === "cadastros"
-                                ? "bg-primary text-black shadow-lg shadow-primary/20"
-                                : "text-gray-400 hover:text-white hover:bg-white/5"
-                                }`}
-                        >
-                            <span className="material-symbols-outlined">group</span>
-                            Cadastros Recebidos
-                        </button>
-                    </nav>
-                </div>
-
-                <div className="p-6 border-t border-white/5">
-                    <button
-                        onClick={async () => {
-                            await fetch("/api/admin/logout", { method: "POST" });
-                            router.push("/admin/login");
-                        }}
-                        className="flex items-center gap-3 h-12 px-4 w-full rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
-                    >
-                        <span className="material-symbols-outlined">logout</span>
-                        Sair do Painel
-                    </button>
-                </div>
+                    </div>
             </aside>
 
             {/* Main Content Area */}
